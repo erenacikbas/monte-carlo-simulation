@@ -19,14 +19,16 @@ def main():
     # Path to your .env file
     os.environ['CONFIG_DIR'] = os.path.abspath(os.path.join(app_dir, os.pardir))
     os.environ['LANG_DIR'] = os.path.join(core_dir, 'core', 'lang')
+    os.environ['STATIC_DIR'] = os.path.join(core_dir, 'static')
 
     # Attempt to load the saved language preference
     language_code = load_preference()
+    language_options = [("English (US)", "en_us"), ("Turkish", "tr")]
 
     # If no preference is found, ask the user to select a language.
     # This updates the language preference based on user selection.
     if language_code is None:
-        ask_language_gui()  # Updated to not pass root since it's handled internally
+        ask_language_gui(language_options)  # Updated to not pass root since it's handled internally
         language_code = load_preference()  # Attempt to reload the preference after selection
 
     if language_code is None:

@@ -1,7 +1,7 @@
-from tkinter import ttk
-import tkinter as tk
-
+from PyQt6.QtWidgets import QTextBrowser, QLabel, QVBoxLayout, QFrame, QApplication
+from PyQt6.QtGui import QTextCursor, QFont
 from core.utils.helpers import open_mail, callback
+from PyQt6.QtCore import Qt  # Add this line to import Qt
 
 
 def populate_about_tab(self, tab):
@@ -14,19 +14,26 @@ def populate_about_tab(self, tab):
     flaticon_credit = self.lang.get("flaticon_credit",
                                     "Icons made by [Flaticon](https://www.flaticon.com/authors/dave-gandy)")
 
-    ttk.Label(tab, text=tab_title, font=('Helvetica', 12, 'bold')).pack(side='top', fill='x', pady=(10, 0),
-                                                                        padx=(10, 0))
+    title_label = QLabel(tab_title)
+    title_font = QFont()
+    title_font.setBold(True)
+    title_label.setFont(title_font)
+    tab_layout = QVBoxLayout(tab)
+    tab_layout.addWidget(title_label)
 
-    # Dynamic about description loading
-    about_text = tk.Text(tab, wrap="word", height=15)
-    about_text.insert('1.0', about_description)
-    about_text.insert('end', "contact@erenacikbas.com", "mail")
-    about_text.tag_config("mail", foreground="blue", underline=1)
-    about_text.tag_bind("mail", "<Button-1>", lambda e: open_mail("mailto:contact@erenacikbas.com"))
-    about_text.config(state="disabled", cursor="arrow")
-    about_text.pack(padx=10, expand=True, fill="both")
+    # Use QTextBrowser for dynamic about description loading with clickable links
+    about_text = QTextBrowser()
+    about_text.setReadOnly(True)
+    about_text.setOpenExternalLinks(False)  # Handle links manually if needed
+    about_text.setHtml(
+        about_description + "<br><br><a href='mailto:contact@erenacikbas.com'>contact@erenacikbas.com</a>")
+    # Connect the anchorClicked signal to your custom slot or lambda
+    about_text.anchorClicked.connect(lambda link: open_mail("mailto:contact@erenacikbas.com"))
+    tab_layout.addWidget(about_text)
 
     # Flaticon credit label
-    credit_label = ttk.Label(tab, text=flaticon_credit, foreground="blue", cursor="hand2")
-    credit_label.pack(pady=5)
-    credit_label.bind("<Button-1>", lambda e: callback("https://www.flaticon.com/authors/dave-gandy"))
+    credit_label = QLabel(flaticon_credit)
+    credit_label.setTextInteractionFlags(
+    credit_label.textInteractionFlags() | Qt.TextInteractionFlag.TextSelectableByMouse)
+    credit_label.linkActivated.connect(lambda url: callback("https://www.flaticon.com/authors/dave-gandy"))
+    tab_layout.addWidget(credit_label)

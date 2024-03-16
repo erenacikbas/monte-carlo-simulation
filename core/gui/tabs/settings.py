@@ -1,24 +1,26 @@
 import json
 import os
-import tkinter as tk
-from tkinter import ttk
-from tkinter import messagebox  # Required for showing message dialogs
+
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (
+    QVBoxLayout, QFrame, QLabel, QComboBox, QLineEdit, QPushButton, QMessageBox, QGroupBox, QHBoxLayout
+)
 from core.utils.helpers import request_restart
 from core.utils.lang import load_language
 
 
 class SettingsTab:
-    def __init__(self, tab, config):
+    def __init__(self, tab, config, main_window=None):
+        self.main_window = main_window
         self.config = config
-        self.number_of_simulations_var = None
         self.language_options = [("English (US)", "en_us"), ("Turkish", "tr")]
         self.language_names = [option[0] for option in self.language_options]
         self.lang_code_map = {code: name for name, code in self.language_options}
-        self.field_units_var = tk.StringVar(value=self.config.get("userPreferences", {}).get("fieldUnits", "Oilfield"))
+        self.field_units_var = None
         self.lang_code = self.config.get("userPreferences", {}).get("language", "en_us")
-        self.default_area_var = tk.StringVar(value=self.config.get("simulationSettings", {}).get("defaultArea", 100))
-        self.language_var = tk.StringVar(value=self.lang_code_map.get(self.lang_code, "English (US)"))
-        self.precision_var = tk.StringVar(value=self.config.get("simulationSettings", {}).get("precision", 2))
+        self.default_area_var = None
+        self.language_var = None
+        self.precision_var = None
         self.theme_var = None
         self.lang = load_language(self.lang_code)
 
@@ -26,70 +28,85 @@ class SettingsTab:
         self.populate_settings_tab(tab)
 
     def populate_settings_tab(self, tab):
-        """
-        Populates the settings tab with options for language, theme, field units, and default sim parameters.
-        """
-        # Title for the settings section
-        ttk.Label(tab, text=self.lang.get("settings", "Settings"), font=('Helvetica', 12, 'bold')).pack(side='top', fill='x', pady=10)
+        tab_layout = QVBoxLayout(tab)
+        tab_layout.setContentsMargins(10, 10, 10, 10)  # Provide padding around the layout
 
-        # Language Selection
-        ttk.Label(tab, text=self.lang.get("settings_lang_selection", "Select Language:")).pack(pady=5)
-        languages_dropdown = ttk.Combobox(tab, textvariable=self.language_var, values=self.language_names,
-                                          state="readonly")
-        languages_dropdown.pack(pady=5)
+        # Language Settings Group
+        lang_group_box = QGroupBox(self.lang.get("language_settings", "Language Settings"))
+        lang_group_layout = QVBoxLayout(lang_group_box)
+        self.setup_language_settings(lang_group_layout)
+        tab_layout.addWidget(lang_group_box)
+        tab_layout.addSpacing(10)  # Add some space between groups
 
+        # Appearance Settings Group
+        appearance_group_box = QGroupBox(self.lang.get("appearance_settings", "Appearance and Units"))
+        appearance_group_layout = QVBoxLayout(appearance_group_box)
+        self.setup_appearance_settings(appearance_group_layout)
+        tab_layout.addWidget(appearance_group_box)
+        tab_layout.addSpacing(10)  # Add some space between groups
+
+        # Save Settings Button with its own layout for proper alignment
+        save_button_layout = QHBoxLayout()
+        save_settings_button = QPushButton(self.lang.get("settings_save", "Save Settings"))
+        save_settings_button.clicked.connect(self.save_settings)
+        save_button_layout.addWidget(save_settings_button)
+        save_button_layout.addStretch()  # Push the button to the left
+        tab_layout.addLayout(save_button_layout)
+
+        tab_layout.addStretch()  # Add a stretchable space only at the end (bottom)
+
+    def setup_language_settings(self, layout):
+        lang_label = QLabel(self.lang.get("settings_lang_selection", "Select Language:"))
+        layout.addWidget(lang_label)
+        self.language_var = QComboBox()
+        self.language_var.addItems(self.language_names)
+        self.language_var.setCurrentIndex(self.language_var.findText(self.lang_code_map[self.lang_code]))
+        layout.addWidget(self.language_var)
+
+    def setup_appearance_settings(self, layout):
         # Theme Setting
-        ttk.Label(tab, text=self.lang.get("settings_theme_selection", "Theme:")).pack(pady=5)
-        self.theme_var = tk.StringVar(value=self.config["userPreferences"]["theme"])
-        theme_options = ["light", "dark"]
-        theme_dropdown = ttk.Combobox(tab, textvariable=self.theme_var, values=theme_options, state="readonly")
-        theme_dropdown.pack()
+        theme_label = QLabel(self.lang.get("settings_theme_selection", "Theme:"))
+        layout.addWidget(theme_label)
+        self.theme_var = QLineEdit(self.config["userPreferences"].get("theme", ""))
+        layout.addWidget(self.theme_var)
 
         # Field Units Setting
-        ttk.Label(tab, text=self.lang.get("settings_field_unit_selection", "Field Units:")).pack(pady=5)
-        field_units_options = ["Oilfield", "Metric"]
-        field_units_dropdown = ttk.Combobox(tab, textvariable=self.field_units_var, values=field_units_options,
-                                            state="readonly")
-        field_units_dropdown.pack()
-
-        # Default Area Setting
-        ttk.Label(tab, text=self.lang.get("settings_default_area_selection", "Default Area (sq km or sq miles):")).pack(pady=5)
-        default_area_entry = ttk.Entry(tab, textvariable=self.default_area_var)
-        default_area_entry.pack()
-
-        # Precision Setting
-        ttk.Label(tab, text=self.lang.get("precision", "Precision:")).pack(pady=5)
-        precision_entry = ttk.Entry(tab, textvariable=self.precision_var)
-        precision_entry.pack()
-
-        # Save Settings Button
-        save_settings_button = ttk.Button(tab, text=self.lang.get("settings_save", "Save Settings"),
-                                          command=self.save_settings)  # Fixed command reference
-        save_settings_button.pack(pady=20)
+        field_units_label = QLabel(self.lang.get("settings_field_unit_selection", "Field Units:"))
+        layout.addWidget(field_units_label)
+        self.field_units_var = QComboBox()
+        self.field_units_var.addItems(["Oilfield", "Metric"])
+        self.field_units_var.setCurrentText(self.config["userPreferences"].get("fieldUnits", "Oilfield"))
+        layout.addWidget(self.field_units_var)
 
     def save_settings(self):
-        """
-        Saves the modified settings back to the config.json file.
-        """
+        QMessageBox.information(None, "Test", "Button clicked!")
+        # Retrieve the selected language from the combo box
+        selected_lang_name = self.language_var.currentText()
+        lang_code = self.lang_code_map.get(selected_lang_name)
 
-        # Update config with the new settings
-        selected_lang_name = self.language_var.get()
-        lang_code = next((code for name, code in self.language_options if name == selected_lang_name), None)
+        # Proceed only if a valid language code is found
+        if lang_code:
+            # Update the configuration dictionary with the new language setting
+            self.config["userPreferences"]["language"] = lang_code
+            self.config["userPreferences"]["theme"] = self.theme_var.text().strip()
+            self.config["userPreferences"]["fieldUnits"] = self.field_units_var.currentText()
 
-        if not lang_code:
-            messagebox.showerror("Error", "Selected language not found.")
-            return
-        print(lang_code)
+            try:
+                # Construct the path to the configuration file
+                config_path = os.path.join(os.getenv('CONFIG_DIR', '.'), "config.json")
 
-        self.config["userPreferences"]["language"] = lang_code
-        self.config["userPreferences"]["theme"] = self.theme_var.get()
-        self.config["userPreferences"]["fieldUnits"] = self.field_units_var.get()
-        self.config["simulationSettings"]["defaultArea"] = float(self.default_area_var.get())
+                # Write the updated configuration back to the file
+                with open(config_path, "w") as config_file:
+                    json.dump(self.config, config_file, indent=4)
 
-        config_dir = os.getenv('CONFIG_DIR', '.')
-        config_path = os.path.join(config_dir, "config.json")
-        with open(config_path, "w") as config_file:
-            json.dump(self.config, config_file, indent=4)
+                # Inform the user that the settings were successfully saved
+                QMessageBox.information(None, "Settings Saved", "Your settings have been saved successfully.")
 
-        messagebox.showinfo("Settings Saved", "Your settings have been saved successfully. Reloading application...")
-        request_restart()  # Ensure this function is properly defined elsewhere in your application
+            except Exception as e:
+                # Inform the user if saving the settings failed
+                QMessageBox.critical(None, "Error", f"Failed to save settings: {str(e)}")
+        else:
+            # Inform the user if the selected language was not found in the mapping
+            QMessageBox.critical(None, "Error", "Selected language not found.")
+
+

@@ -1,50 +1,106 @@
-# Author: Eren Tuna Açıkbaş 2024
 import json
 import os
-import tkinter as tk
-from tkinter import ttk
+import sys
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QVBoxLayout, QTabWidget, QFrame, QHBoxLayout
 
+from core.gui.dialogs.language import LanguageDialog
 from core.gui.tabs.about import populate_about_tab
 from core.gui.tabs.license import populate_license_tab
-from core.gui.tabs.parameters import populate_parameters_tab
+from core.gui.tabs.parameters import ParametersTab
 from core.gui.tabs.settings import SettingsTab
 from core.gui.tabs.simulations import populate_simulation_tab
 from core.utils.lang import load_language
-from preferences import update_language_preference
 from core.utils.helpers import load_config
+from PyQt6.QtCore import Qt
 from core.db.database import create_tables
 
 
-def configure_window(window, title):
-    """
-    Configure the window size and title.
+class MainApplication(QMainWindow):
+    def __init__(self, app_name, app_version):
+        super().__init__()
+        self.app_name = app_name
+        self.app_version = app_version
+        self.config = load_config()  # Load configuration from file
+        self.lang_code = self.config.get("userPreferences", {}).get("language", "en_us")
+        self.lang = load_language(self.lang_code)
+        self.setWindowTitle(app_name)
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
+        self.layout = QVBoxLayout(self.central_widget)
+        self.create_tabs()
+        self.create_footer()
+        self.show()
+        self.resize_app()
 
-    :param window: The window object to be configured.
-    :param title: (Optional) The title to set for the window. Default is an empty string.
-    :return: None
+    def resize_app(self):
+        # Retrieve the size of the screen
+        screen = QApplication.primaryScreen().geometry()
+        width = int(screen.width() * 0.4)  # 40% of the screen width, converted to int
+        height = int(screen.height() * 0.8)  # 80% of the screen height, converted to int
 
-    """
-    screen_width = window.winfo_screenwidth()
-    screen_height = window.winfo_screenheight()
-    window_width = screen_width // 2
-    window_height = int(screen_height * 0.7)  # 60% of the screen height
+        # Calculate the center point for the application window
+        left = int((screen.width() - width) / 2)  # Converted to int
+        top = int((screen.height() - height) / 2)  # Converted to int
 
-    position_right = int(screen_width / 2 - window_width / 2)
-    position_down = int(screen_height / 2 - window_height / 2)
+        # Set the window geometry with integer values
+        self.setGeometry(left, top, width, height)
 
-    window.geometry(f"{window_width}x{window_height}+{position_right}+{position_down}")
-    window.title(title)
+    def create_tabs(self):
+        tab_widget = QTabWidget()
+        self.layout.addWidget(tab_widget)
+
+        # Simulation Tab
+        simulation_tab = QWidget()
+        tab_widget.addTab(simulation_tab, self.lang.get("simulations", "Simulations"))
+        populate_simulation_tab(self, simulation_tab)
+
+        # Plot Tab
+        plot_tab = QWidget()
+        tab_widget.addTab(plot_tab, self.lang.get("results", "Results"))
+
+        # Settings Tab
+        settings_tab = QWidget()
+        tab_widget.addTab(settings_tab, self.lang.get("settings", "Settings"))
+        SettingsTab(settings_tab, self.config)
+
+        # About Tab
+        about_tab = QWidget()
+        tab_widget.addTab(about_tab, self.lang.get("about", "About"))
+        populate_about_tab(self, about_tab)
+
+        # License Tab
+        license_tab = QWidget()
+        tab_widget.addTab(license_tab, self.lang.get("license", "License"))
+        populate_license_tab(self, license_tab)
+
+        # Parameters Tab
+        parameters_tab = QWidget()
+        tab_widget.addTab(parameters_tab, self.lang.get("parameters", "Configuration"))
+        ParametersTab(parameters_tab, self.config, self.lang)
+
+    def create_footer(self):
+        footer_frame = QFrame()
+        footer_layout = QHBoxLayout(footer_frame)  # Changed to QHBoxLayout
+        self.layout.addWidget(footer_frame)
+
+        # Application Version (Align left)
+        version_label = QLabel(self.app_version)
+        version_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        footer_layout.addWidget(version_label)
+
+        footer_layout.addStretch(1)  # Add stretch to push the license to the center
+
+        # License Information (Centered)
+        license_text = self.lang.get("license_info", "© 2024 Eren Tuna Açıkbaş - MIT License")
+        license_label = QLabel(license_text)
+        version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        footer_layout.addWidget(license_label)
+
+        footer_layout.addStretch(1)  # Add another stretch to ensure the license label stays centered
 
 
 def main_gui(lang_code="en_us"):
-    """
-    Starts the main graphical user interface.
-
-    :return: None
-    """
     create_tables()
-
-    root = tk.Tk()
     try:
         with open("config.json", "r", encoding="utf-8") as file:
             config = json.load(file)
@@ -53,153 +109,18 @@ def main_gui(lang_code="en_us"):
     except (FileNotFoundError, json.JSONDecodeError):
         app_name = ""
         app_version = ""
-    # Initialize Main Application with root and language code from preferences
-    MainApplication(root, app_name=app_name, app_version=app_version)
-    root.mainloop()
+
+    app = QApplication(sys.argv)
+    main_app = MainApplication(app_name, app_version)
+    sys.exit(app.exec())
 
 
-def ask_language_gui():
-    """
-    Ask Language GUI
-
-    This method creates a graphical user interface (GUI) to ask the user to select a language from a dropdown menu.
-
-    :return: None
-    """
-    root = tk.Tk()
-    configure_window(root, title="Select Language")
-    language_var = tk.StringVar(value="English (US)")
-    languages = [("English (US)", "en_us"), ("Turkish", "tr")]
-    lang_code_map = dict(languages)
-
-    label = ttk.Label(root, text="Please select a language:")
-    label.pack(pady=10)
-
-    dropdown = ttk.Combobox(root, textvariable=language_var, values=[lang[0] for lang in languages], state="readonly")
-    dropdown.pack(pady=5)
-
-    def on_confirm():
-        selected_lang = language_var.get()
-        language_code = lang_code_map[selected_lang]
-        update_language_preference(language_code)
-        root.destroy()
-
-    confirm_button = ttk.Button(root, text="Confirm", command=on_confirm)
-    confirm_button.pack(pady=20)
-    root.mainloop()
+def ask_language_gui(language_options):
+    app = QApplication(sys.argv)
+    language_dialog = LanguageDialog(language_options)
+    language_dialog.show()
+    sys.exit(app.exec())
 
 
-class MainApplication:
-    """
-    Initializes a new instance of the MainApplication class.
-
-    :param root: The root Tk object for the application.
-    :type root: Tk
-    :param lang_code: The language code to use for localization, defaults to "en_us".
-    :type lang_code: str
-    """
-
-    def __init__(self, root, app_name, app_version):
-        """
-        Initialize the class object.
-
-        :param root: The tkinter root window.
-        :param lang_code: The language code used for localization.
-        :param app_name: The name of the application.
-
-        :return: None
-        """
-        # Initialize instance variables
-
-        self.pending_changes = []
-        self.config_table = None
-        self.config_listbox = None
-        self.app_version = app_version
-        self.config = load_config()  # Load configuration from file
-        self.lang_code = self.config.get("userPreferences", {}).get("language", "en_us")
-        self.lang = load_language(self.lang_code)
-        self.root = root
-        self.static_dir = os.path.join(os.path.dirname(__file__), '../../', 'static')
-        self.parameter_vars = {}  # Initialize parameter_vars here
-        configure_window(self.root, title=app_name)
-        # self.create_header()
-        self.create_footer()
-        self.create_tabs()
-
-    def create_tabs(self):
-        """
-        Creates the tabs and adds them to a ttk.Notebook widget.
-
-        :return: None
-        """
-        tab_control = ttk.Notebook(self.root)
-
-        # Simulation Tab
-        simulation_tab = ttk.Frame(tab_control)
-        tab_control.add(simulation_tab, text=self.lang.get("simulations", "Simulations"))
-
-        # Plot Tab
-        plot_tab = ttk.Frame(tab_control)
-        tab_control.add(plot_tab, text=self.lang.get("results", "Results"))
-
-        # Configuration Tab
-        parameters_tab = ttk.Frame(tab_control)
-        tab_control.add(parameters_tab, text=self.lang.get("parameters", "Configuration"))
-
-        # Settings Tab
-        settings_tab = ttk.Frame(tab_control)
-        SettingsTab(settings_tab, self.config)
-        tab_control.add(settings_tab, text=self.lang.get("settings", "Settings"))
-
-        # About Tab
-        about_tab = ttk.Frame(tab_control)
-        tab_control.add(about_tab, text=self.lang.get("about", "About"))
-        populate_about_tab(self, about_tab)
-
-        # License Tab
-        license_tab = ttk.Frame(tab_control)
-        tab_control.add(license_tab, text=self.lang.get("license", "License"))
-        populate_license_tab(self, license_tab)
-
-        # Simulation Tab
-        populate_simulation_tab(self, simulation_tab)
-
-        # Parameters Tab
-        populate_parameters_tab(self, parameters_tab)
-
-        tab_control.pack(expand=1, fill="both")
-
-    def create_header(self):
-        """
-        Create header with welcome message and app information.
-
-        :return: None
-        """
-        # Example of creating a header with welcome message and app information
-        header_text = self.lang.get("welcome_message", "Welcome to the Monte Carlo Simulation Application!")
-        header = ttk.Label(self.root, text=header_text, font=('Helvetica', 12))
-        header.pack(side='top', fill='x', padx=10, pady=5)
-
-    def create_footer(self):
-        """
-        Create the footer for the application.
-
-        :return: None
-        """
-        # Language selection and license information in the footer
-        footer = ttk.Frame(self.root)
-        footer.pack(side='bottom', fill='x')
-
-        # Language Dropdown
-        # language_var = tk.StringVar(value=self.lang_code)
-        # languages_dropdown = ttk.Combobox(footer, textvariable=language_var, state="readonly",
-        #                                  values=list(get_available_languages_with_names().values()))
-        # languages_dropdown.pack(side='left', padx=10, pady=5)
-        # languages_dropdown.bind("<<ComboboxSelected>>", lambda e: self.on_language_change(language_var))
-
-        # Application Version
-        ttk.Label(footer, text=self.app_version).pack(side='left', padx=(10, 0), pady=5)
-
-        # License Information
-        license_text = self.lang.get("license_info", "© 2024 Eren Tuna Açıkbaş - MIT License")
-        ttk.Label(footer, text=license_text).pack(side='bottom', pady=5)
+if __name__ == "__main__":
+    main_gui()

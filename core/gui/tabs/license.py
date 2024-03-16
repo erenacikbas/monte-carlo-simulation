@@ -1,20 +1,26 @@
-from tkinter import ttk
-import tkinter as tk
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import QTextEdit, QVBoxLayout, QLabel, QScrollArea
 
 
 def populate_license_tab(self, tab):
     # Assuming the LICENSE_TEXT contains your license information
     tab_title = self.lang.get("license", "License")
-    ttk.Label(tab, text=tab_title, font=('Helvetica', 12, 'bold')).pack(side='top', fill='x', pady=(10, 0),
-                                                                        padx=(10, 0))
+    title_label = QLabel(tab_title)
+    title_font = QFont()
+    title_font.setBold(True)
+    title_label.setFont(title_font)
+
+    tab_layout = QVBoxLayout(tab)
+    tab_layout.addWidget(title_label)
 
     # License content
-    license_content = tk.Text(tab, wrap='word', height=15)  # Adjust height as needed
-    license_content.insert('1.0', self.lang.get("license_content", ""))
-    license_content.config(state='disabled')  # Make the text read-only
-    license_content.pack(padx=10, pady=10, fill='both', expand=True)
+    license_content = QTextEdit()
+    license_content.setReadOnly(True)
+    license_content.setPlainText(self.lang.get("license_content", ""))
+    tab_layout.addWidget(license_content)
 
     # Scrollbar for the license content Text widget, if needed
-    scrollbar = ttk.Scrollbar(tab, orient='vertical', command=license_content.yview)
-    scrollbar.pack(side='right', fill='y')
-    license_content['yscrollcommand'] = scrollbar.set
+    scroll_area = QScrollArea()
+    scroll_area.setWidgetResizable(True)
+    scroll_area.setWidget(license_content)
+    tab_layout.addWidget(scroll_area)
