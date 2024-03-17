@@ -14,10 +14,11 @@ def update_language_preference(new_language_code):
     * in the configuration file specified by 'config.json'. If the configuration file doesn't exist, it starts with an empty configuration. If the configuration file is not valid JSON, an
     * error message is printed and the method returns without making any changes. The updated configuration is then written back to the file.
     """
-    config_file_path = 'config.json'
+    config_dir = os.getenv('CONFIG_DIR', '.')  # Defaults to current directory if not set
+    config_path = os.path.join(config_dir, 'config.json')
     # Load the existing configuration
     try:
-        with open(config_file_path, 'r', encoding="utf-8") as file:
+        with open(config_path, 'r', encoding="utf-8") as file:
             config = json.load(file)
     except FileNotFoundError:
         # If the config file doesn't exist, start with an empty configuration
@@ -29,11 +30,11 @@ def update_language_preference(new_language_code):
 
     # Update the language field under userPreferences
     user_preferences = config.get('userPreferences', {})
-    user_preferences['language'] = new_language_code
     config['userPreferences'] = user_preferences
+    user_preferences['language'] = new_language_code
 
     # Write the updated configuration back to the file
-    with open(config_file_path, 'w', encoding="utf-8") as file:
+    with open(config_path, 'w', encoding="utf-8") as file:
         json.dump(config, file, indent=4)
 
 
@@ -48,7 +49,7 @@ def load_preference():
     config_path = os.path.join(config_dir, 'config.json')
 
     try:
-        with open("config.json", "r", encoding="utf-8") as file:
+        with open(config_path, "r", encoding="utf-8") as file:
             try:
                 config = json.load(file)
                 # Correctly access nested dictionaries

@@ -14,16 +14,17 @@ def main():
     # this will get the directory where the script is located
     # Get the directory of the current script
     app_dir = os.path.abspath(os.path.dirname(__file__))
-    core_dir = os.path.abspath(os.path.join(app_dir, os.pardir))
+    root_dir = os.path.abspath(os.path.join(app_dir, os.pardir))
+    print(f"Root directory: {root_dir}")
 
     # Path to your .env file
-    os.environ['CONFIG_DIR'] = os.path.abspath(os.path.join(app_dir, os.pardir))
-    os.environ['LANG_DIR'] = os.path.join(core_dir, 'core', 'lang')
-    os.environ['STATIC_DIR'] = os.path.join(core_dir, 'static')
+    os.environ['CONFIG_DIR'] = root_dir
+    os.environ['LANG_DIR'] = os.path.join(root_dir, 'core', 'lang')
+    os.environ['STATIC_DIR'] = os.path.join(root_dir, 'static')
 
     # Attempt to load the saved language preference
     language_code = load_preference()
-    language_options = [("English (US)", "en_us"), ("Turkish", "tr")]
+    language_options = ["English (US)", "Turkish"]
 
     # If no preference is found, ask the user to select a language.
     # This updates the language preference based on user selection.

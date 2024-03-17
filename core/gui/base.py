@@ -1,7 +1,8 @@
 import json
 import os
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QVBoxLayout, QTabWidget, QFrame, QHBoxLayout
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QVBoxLayout, QTabWidget, QFrame, QHBoxLayout, \
+    QPushButton
 
 from core.gui.dialogs.language import LanguageDialog
 from core.gui.tabs.about import populate_about_tab
@@ -14,6 +15,8 @@ from core.utils.helpers import load_config
 from PyQt6.QtCore import Qt
 from core.db.database import create_tables
 
+def button_clicked():
+    print("Button clicked!")
 
 class MainApplication(QMainWindow):
     def __init__(self, app_name, app_version):
@@ -61,7 +64,7 @@ class MainApplication(QMainWindow):
         # Settings Tab
         settings_tab = QWidget()
         tab_widget.addTab(settings_tab, self.lang.get("settings", "Settings"))
-        SettingsTab(settings_tab, self.config)
+        settings_tab = SettingsTab(self, settings_tab)
 
         # About Tab
         about_tab = QWidget()

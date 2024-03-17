@@ -1,7 +1,18 @@
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QComboBox, QPushButton
+from PyQt6.QtCore import pyqtSignal
+
+from preferences import update_language_preference
+
+
+def accept_language_external(self):
+    print("Accepting language from external method")
+    selected_language = self.language_combo_box.currentText()
+    update_language_preference(selected_language)
 
 
 class LanguageDialog(QDialog):
+    accepted_language = pyqtSignal(str)  # Define a signal to emit the selected language
+
     def __init__(self, language_options):
         super().__init__()
         self.setWindowTitle("Select Language")
@@ -16,9 +27,6 @@ class LanguageDialog(QDialog):
         layout.addWidget(self.language_combo_box)
 
         confirm_button = QPushButton("Confirm")
-        confirm_button.clicked.connect(self.accept_language)
+        confirm_button.clicked.connect(
+            lambda: accept_language_external(self))  # Connect the button to an external method
         layout.addWidget(confirm_button)
-
-    def accept_language(self):
-        selected_language = self.language_combo_box.currentText()
-        self.accepted.emit(selected_language)

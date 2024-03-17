@@ -1,21 +1,50 @@
 import json
 import os
 
-from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
-    QVBoxLayout, QFrame, QLabel, QComboBox, QLineEdit, QPushButton, QMessageBox, QGroupBox, QHBoxLayout
+    QVBoxLayout, QLabel, QComboBox, QLineEdit, QPushButton, QMessageBox, QGroupBox, QHBoxLayout
 )
-from core.utils.helpers import request_restart
+from PyQt6.QtCore import Qt
+
 from core.utils.lang import load_language
 
 
+# Function to save settings
+def save_settings(self):
+    try:
+        selected_lang_name = self.language_var.currentText()
+        lang_code = self.lang_code_map[selected_lang_name]
+        print("Selected Language Code:", lang_code)
+        if lang_code:
+            self.config["userPreferences"]["language"] = lang_code
+            self.config["userPreferences"]["theme"] = self.theme_var.text().strip()
+            self.config["userPreferences"]["fieldUnits"] = self.field_units_var.currentText()
+
+            config_path = os.path.join(os.getenv('CONFIG_DIR', '.'), "config.json")
+
+            print("Saving settings to:", config_path)
+
+            with open(config_path, "w", encoding="utf-8") as config_file:
+                json.dump(self.config, config_file, indent=4)
+
+            QMessageBox.information(None, "Settings Saved", "Your settings have been saved successfully.")
+
+        else:
+            QMessageBox.critical(None, "Error", "Selected language not found.")
+
+    except Exception as e:
+        QMessageBox.critical(None, "Error", f"Failed to save settings: {str(e)}")
+
+
+# Class for Settings Tab
 class SettingsTab:
-    def __init__(self, tab, config, main_window=None):
-        self.main_window = main_window
-        self.config = config
+    def __init__(self, context, tab):
+        self.context = context
+        self.config = self.context.config
         self.language_options = [("English (US)", "en_us"), ("Turkish", "tr")]
         self.language_names = [option[0] for option in self.language_options]
-        self.lang_code_map = {code: name for name, code in self.language_options}
+        self.lang_code_map = {option[0]: option[1] for option in self.language_options}
+        self.lang_map = {v: k for k, v in self.lang_code_map.items()}
         self.field_units_var = None
         self.lang_code = self.config.get("userPreferences", {}).get("language", "en_us")
         self.default_area_var = None
@@ -23,7 +52,6 @@ class SettingsTab:
         self.precision_var = None
         self.theme_var = None
         self.lang = load_language(self.lang_code)
-
         # Populate the settings tab
         self.populate_settings_tab(tab)
 
@@ -47,9 +75,11 @@ class SettingsTab:
 
         # Save Settings Button with its own layout for proper alignment
         save_button_layout = QHBoxLayout()
+        save_button_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         save_settings_button = QPushButton(self.lang.get("settings_save", "Save Settings"))
-        save_settings_button.clicked.connect(self.save_settings)
+        save_settings_button.clicked.connect(lambda: save_settings(self))  # Connect save_settings method here
         save_button_layout.addWidget(save_settings_button)
+
         save_button_layout.addStretch()  # Push the button to the left
         tab_layout.addLayout(save_button_layout)
 
@@ -60,7 +90,7 @@ class SettingsTab:
         layout.addWidget(lang_label)
         self.language_var = QComboBox()
         self.language_var.addItems(self.language_names)
-        self.language_var.setCurrentIndex(self.language_var.findText(self.lang_code_map[self.lang_code]))
+        self.language_var.setCurrentIndex(self.language_var.findText(self.lang_map[self.lang_code]))
         layout.addWidget(self.language_var)
 
     def setup_appearance_settings(self, layout):
@@ -77,36 +107,3 @@ class SettingsTab:
         self.field_units_var.addItems(["Oilfield", "Metric"])
         self.field_units_var.setCurrentText(self.config["userPreferences"].get("fieldUnits", "Oilfield"))
         layout.addWidget(self.field_units_var)
-
-    def save_settings(self):
-        QMessageBox.information(None, "Test", "Button clicked!")
-        # Retrieve the selected language from the combo box
-        selected_lang_name = self.language_var.currentText()
-        lang_code = self.lang_code_map.get(selected_lang_name)
-
-        # Proceed only if a valid language code is found
-        if lang_code:
-            # Update the configuration dictionary with the new language setting
-            self.config["userPreferences"]["language"] = lang_code
-            self.config["userPreferences"]["theme"] = self.theme_var.text().strip()
-            self.config["userPreferences"]["fieldUnits"] = self.field_units_var.currentText()
-
-            try:
-                # Construct the path to the configuration file
-                config_path = os.path.join(os.getenv('CONFIG_DIR', '.'), "config.json")
-
-                # Write the updated configuration back to the file
-                with open(config_path, "w") as config_file:
-                    json.dump(self.config, config_file, indent=4)
-
-                # Inform the user that the settings were successfully saved
-                QMessageBox.information(None, "Settings Saved", "Your settings have been saved successfully.")
-
-            except Exception as e:
-                # Inform the user if saving the settings failed
-                QMessageBox.critical(None, "Error", f"Failed to save settings: {str(e)}")
-        else:
-            # Inform the user if the selected language was not found in the mapping
-            QMessageBox.critical(None, "Error", "Selected language not found.")
-
-
