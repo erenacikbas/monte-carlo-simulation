@@ -9,14 +9,16 @@ from core.gui.tabs.about import populate_about_tab
 from core.gui.tabs.license import populate_license_tab
 from core.gui.tabs.parameters import ParametersTab
 from core.gui.tabs.settings import SettingsTab
-from core.gui.tabs.simulations import populate_simulation_tab
+from core.gui.tabs.simulations import SimulationsTab
 from core.utils.lang import load_language
 from core.utils.helpers import load_config
 from PyQt6.QtCore import Qt
 from core.db.database import create_tables
 
+
 def button_clicked():
     print("Button clicked!")
+
 
 class MainApplication(QMainWindow):
     def __init__(self, app_name, app_version):
@@ -30,10 +32,14 @@ class MainApplication(QMainWindow):
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         self.layout = QVBoxLayout(self.central_widget)
+        self.tab_widget = None  # Attribute to store a reference to the tab widge
+        self.simulation_tab = None
         self.create_tabs()
         self.create_footer()
         self.show()
         self.resize_app()
+
+        # Connect tab widget's currentChanged signal to the refresh method
 
     def resize_app(self):
         # Retrieve the size of the screen
@@ -49,37 +55,48 @@ class MainApplication(QMainWindow):
         self.setGeometry(left, top, width, height)
 
     def create_tabs(self):
-        tab_widget = QTabWidget()
-        self.layout.addWidget(tab_widget)
+        self.tab_widget = QTabWidget()
+        self.layout.addWidget(self.tab_widget)
+
+        # Parameters Tab
+        parameters_tab = QWidget()
+        self.tab_widget.addTab(parameters_tab, self.lang.get("parameters", "Configuration"))
+        ParametersTab(parameters_tab, self.config, self.lang)
 
         # Simulation Tab
-        simulation_tab = QWidget()
-        tab_widget.addTab(simulation_tab, self.lang.get("simulations", "Simulations"))
-        populate_simulation_tab(self, simulation_tab)
+        self.simulation_tab = QWidget()
+        # Keep a reference to the SimulationsTab instance
+        self.simulations_tab_instance = SimulationsTab(self, self.simulation_tab)
+        self.tab_widget.addTab(self.simulation_tab, self.lang.get("simulations", "Simulations"))
 
         # Plot Tab
         plot_tab = QWidget()
-        tab_widget.addTab(plot_tab, self.lang.get("results", "Results"))
+        self.tab_widget.addTab(plot_tab, self.lang.get("results", "Results"))
 
         # Settings Tab
         settings_tab = QWidget()
-        tab_widget.addTab(settings_tab, self.lang.get("settings", "Settings"))
+        self.tab_widget.addTab(settings_tab, self.lang.get("settings", "Settings"))
         settings_tab = SettingsTab(self, settings_tab)
 
         # About Tab
         about_tab = QWidget()
-        tab_widget.addTab(about_tab, self.lang.get("about", "About"))
+        self.tab_widget.addTab(about_tab, self.lang.get("about", "About"))
         populate_about_tab(self, about_tab)
 
         # License Tab
         license_tab = QWidget()
-        tab_widget.addTab(license_tab, self.lang.get("license", "License"))
+        self.tab_widget.addTab(license_tab, self.lang.get("license", "License"))
         populate_license_tab(self, license_tab)
 
-        # Parameters Tab
-        parameters_tab = QWidget()
-        tab_widget.addTab(parameters_tab, self.lang.get("parameters", "Configuration"))
-        ParametersTab(parameters_tab, self.config, self.lang)
+        # Connect tab widget's currentChanged signal to the refresh method
+        self.tab_widget.currentChanged.connect(self.refresh_on_simulation_tab_selected)
+
+    def refresh_on_simulation_tab_selected(self, index):
+        print("Tab changed to index:", index)
+        # Check if the SimulationsTab is the currently selected tab
+        if self.tab_widget.widget(index) == self.simulation_tab:
+            # If so, refresh the enabled parameter in the SimulationsTab
+            self.simulations_tab_instance.refresh_parameters()
 
     def create_footer(self):
         footer_frame = QFrame()

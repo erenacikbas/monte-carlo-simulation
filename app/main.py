@@ -1,6 +1,7 @@
 # Author: Eren Tuna Açıkbaş 2024
 # Title: Monte Carlo Simulation with Python
 # Description: This is a simple Monte Carlo sim with Python.
+from PyQt6.QtWidgets import QDialog
 
 from core.gui.base import ask_language_gui, main_gui
 from preferences import load_preference, update_language_preference
@@ -24,13 +25,19 @@ def main():
 
     # Attempt to load the saved language preference
     language_code = load_preference()
-    language_options = ["English (US)", "Turkish"]
+    language_options = [("English (US)", "en_us"), ("Turkish", "tr")]
+    lang_names = [option[0] for option in language_options]
+    lang_code_map = {option[0]: option[1] for option in language_options}
 
     # If no preference is found, ask the user to select a language.
     # This updates the language preference based on user selection.
     if language_code is None:
-        ask_language_gui(language_options)  # Updated to not pass root since it's handled internally
-        language_code = load_preference()  # Attempt to reload the preference after selection
+        result = ask_language_gui(lang_names, lang_code_map)
+        if result == QDialog.accepted:  # If language selection dialog was accepted
+            language_code = load_preference()  # Attempt to reload the preference after selection
+        else:
+            print("Language selection dialog was closed without selecting a language.")
+            return  # Exit the main function
 
     if language_code is None:
         print("Error: No language preference found. Defaulting to English.")

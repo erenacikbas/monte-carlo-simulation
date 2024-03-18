@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QTextBrowser, QLabel, QVBoxLayout, QFrame, QApplication
 from PyQt6.QtGui import QTextCursor, QFont
 from core.utils.helpers import open_mail, callback
-from PyQt6.QtCore import Qt  # Add this line to import Qt
+from PyQt6.QtCore import Qt
 
 
 def populate_about_tab(self, tab):
@@ -18,6 +18,11 @@ def populate_about_tab(self, tab):
     title_font = QFont()
     title_font.setBold(True)
     title_label.setFont(title_font)
+
+    # Create a frame to contain the content
+    frame = QFrame()
+    frame_layout = QVBoxLayout(frame)
+
     tab_layout = QVBoxLayout(tab)
     tab_layout.addWidget(title_label)
 
@@ -25,15 +30,16 @@ def populate_about_tab(self, tab):
     about_text = QTextBrowser()
     about_text.setReadOnly(True)
     about_text.setOpenExternalLinks(False)  # Handle links manually if needed
-    about_text.setHtml(
-        about_description + "<br><br><a href='mailto:contact@erenacikbas.com'>contact@erenacikbas.com</a>")
+    about_text.setHtml(about_description)
     # Connect the anchorClicked signal to your custom slot or lambda
     about_text.anchorClicked.connect(lambda link: open_mail("mailto:contact@erenacikbas.com"))
-    tab_layout.addWidget(about_text)
+
+    frame_layout.addWidget(about_text)
 
     # Flaticon credit label
     credit_label = QLabel(flaticon_credit)
-    credit_label.setTextInteractionFlags(
-    credit_label.textInteractionFlags() | Qt.TextInteractionFlag.TextSelectableByMouse)
+    credit_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
     credit_label.linkActivated.connect(lambda url: callback("https://www.flaticon.com/authors/dave-gandy"))
-    tab_layout.addWidget(credit_label)
+    frame_layout.addWidget(credit_label)
+
+    tab_layout.addWidget(frame)

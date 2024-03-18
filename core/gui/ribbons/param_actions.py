@@ -16,17 +16,17 @@ def create_action_ribbon(self, parent):
 
     # Define actions with icons
     save_action = QAction(QIcon(os.path.join(static_dir, 'icons', 'save.png')), "Save", action_ribbon)
-    save_action.triggered.connect(self.save_changes)
+    save_action.triggered.connect(lambda: self.save_changes())
     action_ribbon.addAction(save_action)
     self.save_button = action_ribbon.widgetForAction(save_action)  # Store for later use
     self.save_button.setEnabled(False)  # Initially disabled
 
     refresh_action = QAction(QIcon(os.path.join(static_dir, 'icons', 'refresh.png')), "Refresh", action_ribbon)
-    refresh_action.triggered.connect(self.refresh_parameters)
+    refresh_action.triggered.connect(lambda: self.refresh_parameters())
     action_ribbon.addAction(refresh_action)
 
     delete_action = QAction(QIcon(os.path.join(static_dir, 'icons', 'delete.png')), "Delete", action_ribbon)
-    delete_action.triggered.connect(self.delete_parameters)
+    delete_action.triggered.connect(lambda: self.delete_parameters())
     action_ribbon.addAction(delete_action)
 
     # Ensure the parent has a layout before adding the action_ribbon

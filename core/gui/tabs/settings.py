@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 
+from core.utils.helpers import request_restart
 from core.utils.lang import load_language
 
 
@@ -28,6 +29,7 @@ def save_settings(self):
                 json.dump(self.config, config_file, indent=4)
 
             QMessageBox.information(None, "Settings Saved", "Your settings have been saved successfully.")
+            request_restart()
 
         else:
             QMessageBox.critical(None, "Error", "Selected language not found.")

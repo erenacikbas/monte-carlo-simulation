@@ -5,7 +5,7 @@
         "description": "A tool for estimating hydrocarbon volumes in subsurface reservoirs using Monte Carlo simulation methods."
     },
     "userPreferences": {
-        "language": "English (US)",
+        "language": "en_us",
         "theme": "Dark",
         "recentProjects": [],
         "fieldUnits": "Metric",

@@ -3,17 +3,17 @@
 import numpy as np
 
 
-def get_parameter_distributions(n_simulations):
+def generate_normal_distribution(mu, sigma, size):
     """
-    Retrieve parameter distributions for simulations.
+    Generate a normal (Gaussian) distribution.
 
-    :param n_simulations: The number of simulations to generate distributions for.
-    :return: A dictionary containing parameter distributions.
+    Parameters:
+    - mu: float. The mean of the distribution.
+    - sigma: float. The standard deviation of the distribution.
+    - size: int. The number of samples to generate.
+
+    Returns:
+    - samples: ndarray. An array of samples from the normal distribution.
     """
-    return {
-        'area': np.random.normal(1000, 50, n_simulations),
-        'thickness': np.random.normal(50, 10, n_simulations),
-        'porosity': np.random.normal(0.3, 0.05, n_simulations),
-        'water_sat': np.random.normal(0.2, 0.05, n_simulations),
-        'fvf': np.random.normal(1.1, 0.1, n_simulations),
-    }
+    samples = np.random.normal(mu, sigma, size)
+    return samples

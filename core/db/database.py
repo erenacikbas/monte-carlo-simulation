@@ -5,10 +5,30 @@ from datetime import datetime
 # Assuming environment variables are set externally
 DATABASE_PATH = os.getenv('DATABASE_PATH', 'simulation_results.db')
 
+form_to_db_column_mapping = {
+    "Water Saturation": "water_saturation",
+    "FVF": "fvf",
+    "Area": "area",
+    "Thickness": "thickness",
+    "Porosity": "porosity",
+    "Iterations": "iterations",
+    "Name": "name",
+    "Id": "id",
+    "Enabled": "enabled",
+}
+
 
 def get_db_connection():
     """Establishes a connection to the SQLite database."""
     return sqlite3.connect(DATABASE_PATH)
+
+
+def activate_parameter(config_id):
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE parameters SET enabled = 0")  # Disable all
+        cursor.execute("UPDATE parameters SET enabled = 1 WHERE id = ?", (config_id,))
+        conn.commit()
 
 
 def create_tables():
@@ -31,6 +51,13 @@ def create_tables():
         conn.commit()
 
 
+def get_enabled_parameter():
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM parameters WHERE enabled = 1 LIMIT 1")
+        enabled_param = cursor.fetchone()
+        return enabled_param
+
 def insert_parameters(config):
     with get_db_connection() as conn:
         cursor = conn.cursor()
@@ -43,10 +70,39 @@ def insert_parameters(config):
         conn.commit()
 
 
+def update_parameter_by_id(config_id, new_values):
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        # Ensure form_to_db_column_mapping is defined somewhere accessible to this function.
+        # This dictionary should map form field names to your database column names.
+        # Example:
+        # form_to_db_column_mapping = {
+        #     "Name": "name",
+        #     "Water Saturation": "water_saturation",
+        #     # Add more mappings as necessary...
+        # }
+
+        # Apply the mapping to new_values' keys
+        new_values_mapped = {form_to_db_column_mapping.get(key, key): value for key, value in new_values.items()}
+
+        # Construct the SQL query dynamically based on new_values_mapped
+        set_clauses = [f'"{key}" = ?' for key in new_values_mapped]  # Note the double quotes around {key}
+        sql_query = f'UPDATE parameters SET {", ".join(set_clauses)}, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+        params = list(new_values_mapped.values()) + [config_id]
+
+        try:
+            cursor.execute(sql_query, params)
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database error: {e}")
+        except Exception as e:
+            print(f"Error updating parameter: {e}")
+
+
 def list_parameters():
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT name, iterations, area, thickness, porosity, water_saturation, created_at, '
+        cursor.execute('SELECT id, name, iterations, area, thickness, porosity, fvf, water_saturation, created_at, '
                        'updated_at, enabled FROM parameters ORDER BY created_at DESC')
         return cursor.fetchall()
 
