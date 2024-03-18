@@ -63,20 +63,10 @@ class SimulationsTab:
         layout.addWidget(parameter_label)
 
         self.parameter_var = QComboBox()
-        # If there's an enabled parameter, add it to the dropdown and select it
-        if self.enabled_parameter:
-            self.parameter_var.addItem(self.enabled_parameter[1])  # Assuming [1] is the name
-            # Displaying enabled parameter's fields
-            for field_index, field_name in enumerate(
-                    ["Name", "Iterations", "Area", "Thickness", "Porosity", "Water Saturation", "FVF"], start=1):
-                # Assuming these field names map directly to indices in self.enabled_parameter, adjust if necessary
-                # Skipping ID at index 0, adjust if your data structure is different
-                if field_index < len(self.enabled_parameter) - 1:  # Exclude the enabled flag from display
-                    field_value = self.enabled_parameter[field_index]
-                    field_label = QLabel(f"{field_name}: {field_value}")
-                    layout.addWidget(field_label)
-        else:
-            self.parameter_var.addItems([param[1] for param in self.enabled_parameter])
+        # Ensure self.enabled_parameter is iterable
+        enabled_parameters = self.enabled_parameter if self.enabled_parameter else []
+        for param in enabled_parameters:
+            self.parameter_var.addItem(param[1])  # Assuming [1] is the name
         layout.addWidget(self.parameter_var)
 
     def setup_iterations_configuration(self, layout):
