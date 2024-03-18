@@ -66,7 +66,8 @@ class MainApplication(QMainWindow):
         # Simulation Tab
         self.simulation_tab = QWidget()
         # Keep a reference to the SimulationsTab instance
-        self.simulations_tab_instance = SimulationsTab(self, self.simulation_tab)
+        # Assuming 'simulation_tab_widget' is the QWidget or QTabWidget you want to use as the container
+        self.simulations_tab_instance = SimulationsTab(context=self, tab=self.simulation_tab)
         self.tab_widget.addTab(self.simulation_tab, self.lang.get("simulations", "Simulations"))
 
         # Plot Tab

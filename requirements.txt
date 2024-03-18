@@ -3,3 +3,4 @@ matplotlib
 python-dotenv
 pillow
 PyQt6
+scipy

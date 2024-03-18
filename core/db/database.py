@@ -104,10 +104,20 @@ def create_tables():
 def get_enabled_parameter():
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM parameters WHERE enabled = 1 LIMIT 1")
+        cursor.execute("SELECT id, name FROM parameters WHERE enabled = 1 LIMIT 1")
         enabled_param = cursor.fetchone()
         print(enabled_param)
         return enabled_param if enabled_param else []
+
+
+def get_distributions_by_parameter_id(parameter_id):
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT d.id, d.parameter_id, d.parameter_name, d.distribution_type, d.mean, d.std_dev, d.min_value, d.max_value, d.mode_value, p.iterations
+            FROM distributions as d INNER JOIN parameters as p ON d.parameter_id = p.id
+            WHERE parameter_id = ?''', (parameter_id,))
+        return cursor.fetchall()
 
 
 def insert_parameters(config):
@@ -166,7 +176,6 @@ def list_parameters():
         ORDER BY p.created_at DESC
         ''')
         return cursor.fetchall()
-
 
 
 def enable_parameter(config_id):

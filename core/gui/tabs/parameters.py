@@ -49,13 +49,19 @@ class ParametersTab:
             self.parameter_vars["Id"].setVisible(True)
             self.parameter_vars["Id"].setReadOnly(True)
             self.parameter_vars["Id"].setStyleSheet("background-color: #e0e0e0;")
-        details = [item.text(i) for i in range(self.parameters_table.columnCount())]
-        for i, key in enumerate(self.parameter_vars.keys()):
-            self.parameter_vars[key].setText(details[i])
-            self.original_values[key] = details[i]
-        for i, (key, entry) in enumerate(self.parameter_vars.items()):
-            entry.setText(details[i])
-            self.original_values[key] = details[i]  # Store the original value
+            self.parameter_vars["Id"].setText(str(self.current_id))
+
+        # Clear previous values
+        for key in self.parameter_vars.keys():
+            self.parameter_vars[key].setText("")
+
+        # Load new values from selected item
+        for i, key in enumerate(
+                ["Id", "Name", "Iterations", "Area", "Thickness", "Porosity", "Water Saturation", "FVF"]):
+            value = item.text(i) if i < item.columnCount() else ""
+            if key in self.parameter_vars:
+                self.parameter_vars[key].setText(value)
+                self.original_values[key] = value
 
         self.create_or_update_button.setText(self.lang.get("update_parameter", "Update Parameter"))
         self.create_or_update_button.setEnabled(True)
@@ -394,7 +400,7 @@ class ParametersTab:
             "Area": ["Uniform", "Triangular"],
             "Thickness": ["Normal", "Log-normal"],
             "Porosity": ["Normal", "Log-normal"],
-            "Water Saturation": ["Normal", "Log-normal",],
+            "Water Saturation": ["Normal", "Log-normal", ],
             "FVF": ["Flexible"]  # Example for FVF
         }
 
@@ -503,7 +509,6 @@ class ParametersTab:
 
     def apply_parameters(self):
         parameter_data = self.collect_and_validate_input()
-        print(parameter_data)
         if parameter_data is None:
             return  # Early exit if validation fails
 
@@ -537,6 +542,6 @@ class ParametersTab:
     def adjust_column_widths(self):
         max_width = 200  # Set your desired maximum width for any column
         for column in range(self.parameters_table.columnCount()):
-            #self.parameters_table.resizeColumnToContents(column)
+            # self.parameters_table.resizeColumnToContents(column)
             if self.parameters_table.columnWidth(column) > max_width:
                 self.parameters_table.setColumnWidth(column, max_width)
