@@ -65,8 +65,9 @@ class SimulationsTab:
         self.parameter_var = QComboBox()
         # Ensure self.enabled_parameter is iterable
         enabled_parameters = self.enabled_parameter if self.enabled_parameter else []
-        for param in enabled_parameters:
-            self.parameter_var.addItem(param[1])  # Assuming [1] is the name
+        if enabled_parameters:
+            self.parameter_var.addItem(enabled_parameters[1])
+
         layout.addWidget(self.parameter_var)
 
     def setup_iterations_configuration(self, layout):

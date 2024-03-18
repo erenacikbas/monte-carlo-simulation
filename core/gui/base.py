@@ -44,7 +44,7 @@ class MainApplication(QMainWindow):
     def resize_app(self):
         # Retrieve the size of the screen
         screen = QApplication.primaryScreen().geometry()
-        width = int(screen.width() * 0.4)  # 40% of the screen width, converted to int
+        width = int(screen.width() * 0.5)  # 50% of the screen width, converted to int
         height = int(screen.height() * 0.8)  # 80% of the screen height, converted to int
 
         # Calculate the center point for the application window

@@ -26,7 +26,6 @@ class ParametersTab:
         self.create_or_update_button.clicked.connect(self.create_or_update_parameter)
         self.original_values = {}  # Initialize original_values here
 
-
         self.populate_parameters_tab(tab)
 
         # Initialize UI state
@@ -221,7 +220,7 @@ class ParametersTab:
         desc_label.setStyleSheet("color: #686868;")  # Greyed out appearance
         parameter_group_layout.addWidget(desc_label, 0, 0, 1, 2)  # Span two columns for description
 
-        if parameter in ["Area", "Water Saturation", "FVF"]:
+        if parameter in ["Area", "FVF"]:
             # Fields for min and max values
             min_edit = QLineEdit()
             min_edit.setPlaceholderText("Min")
@@ -229,10 +228,10 @@ class ParametersTab:
             max_edit.setPlaceholderText("Max")
             parameter_group_layout.addWidget(min_edit, 1, 0)
             parameter_group_layout.addWidget(max_edit, 1, 1)
-            self.parameter_vars[f"{parameter}_min"] = min_edit
-            self.parameter_vars[f"{parameter}_max"] = max_edit
+            self.parameter_vars[f"{parameter}_Min"] = min_edit
+            self.parameter_vars[f"{parameter}_Max"] = max_edit
 
-        elif parameter in ["Thickness", "Porosity"]:
+        elif parameter in ["Thickness", "Water Saturation", "Porosity"]:
             # Fields for mean and std deviation
             mean_edit = QLineEdit()
             mean_edit.setPlaceholderText("Mean")
@@ -240,8 +239,8 @@ class ParametersTab:
             std_dev_edit.setPlaceholderText("Std Dev")
             parameter_group_layout.addWidget(mean_edit, 1, 0)
             parameter_group_layout.addWidget(std_dev_edit, 1, 1)
-            self.parameter_vars[f"{parameter}_mean"] = mean_edit
-            self.parameter_vars[f"{parameter}_std_dev"] = std_dev_edit
+            self.parameter_vars[f"{parameter}_Mean"] = mean_edit
+            self.parameter_vars[f"{parameter}_Std_dev"] = std_dev_edit
 
         else:
             # Single field for Name and Iterations
@@ -293,8 +292,9 @@ class ParametersTab:
         self.parameters_table = QTreeWidget()
         self.parameters_table.setIndentation(0)  # This sets the indentation to 0 pixels
         self.parameters_table.setHeaderLabels([
-            'ID', 'Name', 'Iterations', 'Enabled', 'Parameter Name', 'Distribution Type',
-            'Mean', 'Std Dev', 'Min', 'Max', 'Mode', 'Created At', 'Updated At'
+            'ID', 'Name', 'Iterations', 'Enabled', 'Created At', 'Updated At'
+            # 'Parameter Name', 'Distribution Type',
+            # 'Mean', 'Std Dev', 'Min', 'Max', 'Mode', 'Created At', 'Updated At'
         ])
         self.parameters_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.parameters_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
@@ -333,7 +333,6 @@ class ParametersTab:
     def create_or_update_parameter(self):
         # Check if it's a create or update action based on the button text
         if self.create_or_update_button.text() == self.lang.get("create_new_parameter", "Create New Parameter"):
-            print("I'm here")
             self.apply_parameters()
         else:
             self.update_parameter()
@@ -391,68 +390,132 @@ class ParametersTab:
         name = self.parameter_vars["Name"].text().strip()
         iterations = self.parameter_vars["Iterations"].text().strip()
 
+        distributions_for_parameters = {
+            "Area": ["Uniform", "Triangular"],
+            "Thickness": ["Normal", "Log-normal"],
+            "Porosity": ["Normal", "Log-normal"],
+            "Water Saturation": ["Normal", "Log-normal",],
+            "FVF": ["Flexible"]  # Example for FVF
+        }
+
         # Validate basic parameter data
         if not name or not iterations.isdigit():
             QErrorMessage().showMessage("Name and Iterations are required, and Iterations must be numeric.")
             return None
 
+        print("parameter_vars", self.parameter_vars)
+
         # Initialize parameter object with basic data and empty distributions list
         parameter_data = {
-            "name": name,
-            "iterations": int(iterations),
-            "distributions": []
+            "Name": name,
+            "Iterations": int(iterations),
+            "Distributions": []
         }
 
         # Example: Collect and validate distribution data for 'Area'
-        area_data = self.collect_distribution_data("Area")
-        if area_data:
-            parameter_data["distributions"].append(area_data)
-        else:
-            QErrorMessage().showMessage("Invalid distribution data for Area.")
-            return None
+        # area_data = self.collect_distribution_data("Area")
+        for parameter_name, distribution_types in distributions_for_parameters.items():
+            if f"{parameter_name}_Min" or f"{parameter_name}_Std_dev" in self.parameter_vars:
+                for dist_type in distribution_types:
+                    print(f"Processing distribution type: {dist_type}")
+                    data = self.collect_distribution_data(parameter_name, dist_type)
+                    print("Data:", data)
+                    if data:
+                        print("Adding distribution data:", data)
+                        parameter_data["Distributions"].append(data)
+                    else:
+                        QErrorMessage().showMessage(f"Invalid distribution data for {parameter_name} ({dist_type}).")
+                        return None
+        # if area_data:
+        #     parameter_data["distributions"].append(area_data)
+        #     # Add parameter name
+        #     parameter_data["distributions"][0]["parameter_name"] = "Area"
+        #     # Add distribution type
+        #     parameter_data["distributions"][0]["distribution_type"] = "Uniform"
+        # else:
+        #     QErrorMessage().showMessage("Invalid distribution data for Area.")
+        #     return None
+        #
+        # thickness_data = self.collect_distribution_data("Thickness")
+        # if thickness_data:
+        #     parameter_data["distributions"].append(thickness_data)
+        # else:
+        #     QErrorMessage().showMessage("Invalid distribution data for Thickness.")
+        #     return None
+        #
+        # porosity_data = self.collect_distribution_data("Porosity")
+        # if porosity_data:
+        #     parameter_data["distributions"].append(porosity_data)
+        # else:
+        #     QErrorMessage().showMessage("Invalid distribution data for Porosity.")
+        #     return None
+        #
+        # water_saturation_data = self.collect_distribution_data("Water Saturation")
+        # if water_saturation_data:
+        #     parameter_data["distributions"].append(water_saturation_data)
+        # else:
+        #     QErrorMessage().showMessage("Invalid distribution data for Water Saturation.")
+        #     return None
+        #
+        # fvf_data = self.collect_distribution_data("FVF")
+        # if fvf_data:
+        #     parameter_data["distributions"].append(fvf_data)
+        # else:
+        #     QErrorMessage().showMessage("Invalid distribution data for FVF.")
+        #     return None
 
         # Repeat the above for other distributions as needed
 
         return parameter_data
 
-    def collect_distribution_data(self, parameter_name):
+    def collect_distribution_data(self, parameter_name, distribution_type):
         # Example for Area; adapt for other parameters
-        min_value = self.parameter_vars[f"{parameter_name}_Min"].text().strip()
-        max_value = self.parameter_vars[f"{parameter_name}_Max"].text().strip()
-        distribution_type = self.parameter_vars[
-            f"{parameter_name}_DistributionType"].currentText().strip()  # Assuming ComboBox
+
+        if distribution_type == "Flexible":
+            min_value = self.parameter_vars[f"{parameter_name}_Min"].text().strip()
+            max_value = self.parameter_vars[f"{parameter_name}_Max"].text().strip()
+        elif distribution_type == "Normal" or distribution_type == "Log-normal":
+            mean_value = self.parameter_vars[f"{parameter_name}_Mean"].text().strip()
+            std_value = self.parameter_vars[f"{parameter_name}_Std_dev"].text().strip()
+        elif distribution_type == "Triangular" or "Uniform":
+            min_value = self.parameter_vars[f"{parameter_name}_Min"].text().strip()
+            max_value = self.parameter_vars[f"{parameter_name}_Max"].text().strip()
+        # min_value = self.parameter_vars[f"{parameter_name}_Min"].text().strip()
+        # max_value = self.parameter_vars[f"{parameter_name}_Max"].text().strip()
+        # std_value = self.parameter_vars[f"{parameter_name}_Std_dev"].text().strip()
+        # mean_value = self.parameter_vars[f"{parameter_name}_Mean"].text().strip()
+        # mode_value = self.parameter_vars[f"{parameter_name}_Mode"].text().strip()
 
         # Validate distribution data as needed
-        if not min_value or not max_value:
-            return None
+        # if not min_value or not max_value:
+        #     return None
 
         return {
-            "parameter_name": parameter_name,
-            "distribution_type": distribution_type,
-            "min_value": min_value,
-            "max_value": max_value
+            "Parameter_name": parameter_name,
+            "Distribution_type": distribution_type,
+            "Min_value": min_value if distribution_type in ["Triangular", "Uniform", "Flexible"] else None,
+            "Max_value": max_value if distribution_type in ["Triangular", "Uniform", "Flexible"] else None,
+            "Std_dev": std_value if distribution_type in ["Normal", "Log-normal"] else None,
+            "Mean": mean_value if distribution_type in ["Normal", "Log-normal"] else None,
+            # "Mode_value": mode_value
             # Add other fields as necessary
         }
 
     def apply_parameters(self):
-        # Check all fields except 'Id' to ensure they're not empty after stripping whitespace
-        if not all(self.parameter_vars[key].text().strip() for key in self.parameter_vars if key != "Id"):
-            error_dialog = QErrorMessage()
-            error_dialog.showMessage("All fields are required, except ID.")
-            return
+        parameter_data = self.collect_and_validate_input()
+        print(parameter_data)
+        if parameter_data is None:
+            return  # Early exit if validation fails
 
-        # Prepare the parameter values excluding 'Id'
-        parameter_values = {key: self.parameter_vars[key].text().strip() for key in self.parameter_vars if key != "Id"}
-
-        # Determine if it's a new parameter or an update
         if self.current_id is None:
-            # It's a new parameter; ID will be auto-generated by the database
-            insert_parameters(parameter_values)
+            # New parameter insertion
+            insert_parameters(parameter_data)
         else:
-            # Updating an existing parameter
-            update_parameter_by_id(self.current_id, parameter_values)
+            # Update existing parameter
+            parameter_data['id'] = self.current_id  # Ensure the ID is included for updates
+            update_parameter_by_id(parameter_data)
 
-        self.load_parameters()  # Refresh the list to include the new or updated parameters
+        self.load_parameters()  # Refresh UI
 
     def load_parameters(self):
         self.parameters_table.clear()
@@ -464,7 +527,8 @@ class ParametersTab:
                 param[1],  # Name
                 str(param[2]),  # Iterations
                 "Yes" if param[3] else "No",  # Enabled
-                param[6]  # Distributions
+                param[4],  # "Created At"
+                param[5]  # "Updated At"
             ]
             item = CenteredTreeWidgetItem(display_values)
             self.parameters_table.addTopLevelItem(item)
@@ -473,6 +537,6 @@ class ParametersTab:
     def adjust_column_widths(self):
         max_width = 200  # Set your desired maximum width for any column
         for column in range(self.parameters_table.columnCount()):
-            self.parameters_table.resizeColumnToContents(column)
+            #self.parameters_table.resizeColumnToContents(column)
             if self.parameters_table.columnWidth(column) > max_width:
                 self.parameters_table.setColumnWidth(column, max_width)

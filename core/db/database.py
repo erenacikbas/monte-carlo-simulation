@@ -106,8 +106,8 @@ def get_enabled_parameter():
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM parameters WHERE enabled = 1 LIMIT 1")
         enabled_param = cursor.fetchone()
+        print(enabled_param)
         return enabled_param if enabled_param else []
-
 
 
 def insert_parameters(config):
@@ -116,29 +116,28 @@ def insert_parameters(config):
         # Insert into parameters table
         cursor.execute('''
             INSERT INTO parameters (name, iterations, enabled)
-            VALUES (?, ?, 1)''', (config['name'], config['iterations']))
+            VALUES (?, ?, 1)''', (config['Name'], config['Iterations']))
         last_row_id = cursor.lastrowid
 
         # Disable all others
         cursor.execute('UPDATE parameters SET enabled = 0 WHERE id != ?', (last_row_id,))
 
         # Insert into distributions table, assume config includes 'distributions' which is a list of distribution dicts
-        for distribution in config.get('distributions', []):
+        for distribution in config.get('Distributions', []):
             cursor.execute('''
                 INSERT INTO distributions (parameter_id, parameter_name, distribution_type, mean, std_dev, min_value, max_value, mode_value)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', (
                 last_row_id,
-                distribution['parameter_name'],
-                distribution['distribution_type'],
-                distribution.get('mean', None),
-                distribution.get('std_dev', None),
-                distribution.get('min_value', None),
-                distribution.get('max_value', None),
-                distribution.get('mode_value', None)
+                distribution['Parameter_name'],
+                distribution['Distribution_type'],
+                distribution.get('Mean', None),
+                distribution.get('Std_dev', None),
+                distribution.get('Min_value', None),
+                distribution.get('Max_value', None),
+                distribution.get('Mode_value', None)
             ))
 
         conn.commit()
-
 
 
 def update_parameter_by_id(config_id, new_values):
@@ -161,16 +160,9 @@ def list_parameters():
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute('''
-        SELECT p.id, p.name, p.iterations, p.enabled, p.created_at, p.updated_at, 
-               GROUP_CONCAT(d.distribution_type || ' (' || 
-               COALESCE('Mean: ' || d.mean, '') || ' ' ||
-               COALESCE('Std Dev: ' || d.std_dev, '') || ' ' ||
-               COALESCE('Min: ' || d.min_value, '') || ' ' ||
-               COALESCE('Max: ' || d.max_value, '') || ' ' ||
-               COALESCE('Mode: ' || d.mode_value, '') || ')') AS distributions
+        SELECT p.id, p.name, p.iterations, p.enabled, 
+               p.created_at, p.updated_at
         FROM parameters p
-        LEFT JOIN distributions d ON p.id = d.parameter_id
-        GROUP BY p.id
         ORDER BY p.created_at DESC
         ''')
         return cursor.fetchall()
