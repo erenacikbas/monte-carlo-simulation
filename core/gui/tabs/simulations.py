@@ -222,3 +222,25 @@ class SimulationsTab:
         ax_cdf.legend()
         return fig_cdf
 
+    def modify_cdf_with_percentiles(ax_cdf, data_sorted, parameter_name):
+        # Calculate percentiles
+        percentiles = [10, 50, 90]
+        perc_values = np.percentile(data_sorted, percentiles)
+
+        # Plot the CDF
+        cdf = np.arange(len(data_sorted)) / float(len(data_sorted) - 1)
+        ax_cdf.plot(data_sorted, cdf, marker='.', linestyle='-', label='CDF')
+
+        # Add horizontal lines for percentiles
+        for perc, value in zip(percentiles, perc_values):
+            ax_cdf.axhline(y=perc / 100, color='red', linestyle='--')
+            ax_cdf.axvline(x=value, color='red', linestyle='--')
+
+            # Annotate the percentile lines
+            ax_cdf.annotate(f'{perc}%', xy=(value, perc / 100), xytext=(-35, 0),
+                            textcoords='offset points', va='center',
+                            arrowprops=dict(arrowstyle='->', color='red'),
+                            bbox=dict(boxstyle='round,pad=0.5', fc='yellow', alpha=0.5))
+
+            # Show the value at these points
+            ax_cdf.text(value, perc / 100, f'{value:.2f}', color='black', ha='right')

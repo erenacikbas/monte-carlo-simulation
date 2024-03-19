@@ -50,6 +50,7 @@ class MonteCarloSimulator:
         ooip_cdf = np.cumsum(ooip_pdf)
         ooip_cdf = ooip_cdf / ooip_cdf[-1]  # Normalize to make the last value 1
 
+
         # Plotting OOIP PDF
         fig_pdf = Figure(figsize=(5, 4), dpi=100)
         plot_pdf = fig_pdf.add_subplot(1, 1, 1)
@@ -62,6 +63,7 @@ class MonteCarloSimulator:
         fig_cdf = Figure(figsize=(5, 4), dpi=100)
         plot_cdf = fig_cdf.add_subplot(1, 1, 1)
         plot_cdf.plot(ooip_vals, ooip_cdf, color='red')
+        plot_cdf.invert_xaxis()
         plot_cdf.set_title("OOIP Distribution (CDF)")
         plot_cdf.set_xlabel("OOIP (bbl)")
         plot_cdf.set_ylabel("Cumulative Probability")
