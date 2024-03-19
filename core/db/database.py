@@ -104,9 +104,8 @@ def create_tables():
 def get_enabled_parameter():
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT id, name FROM parameters WHERE enabled = 1 LIMIT 1")
+        cursor.execute("SELECT id, name, iterations FROM parameters WHERE enabled = 1 LIMIT 1")
         enabled_param = cursor.fetchone()
-        print(enabled_param)
         return enabled_param if enabled_param else []
 
 def get_enabled_parameter_and_distributions():

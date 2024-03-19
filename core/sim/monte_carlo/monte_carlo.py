@@ -43,13 +43,12 @@ class MonteCarloSimulator:
 
         # Calculate the KDE for OOIP results to estimate the PDF
         ooip_density = gaussian_kde(ooip_results)
-        ooip_vals = np.linspace(min(ooip_results), max(ooip_results), 1000)
+        ooip_vals = np.linspace(min(ooip_results), max(ooip_results), 100000)
         ooip_pdf = ooip_density(ooip_vals)
 
         # Calculate the CDF using the cumulative integral of the PDF
         ooip_cdf = np.cumsum(ooip_pdf)
         ooip_cdf = ooip_cdf / ooip_cdf[-1]  # Normalize to make the last value 1
-
 
         # Plotting OOIP PDF
         fig_pdf = Figure(figsize=(5, 4), dpi=100)

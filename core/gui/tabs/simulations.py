@@ -24,6 +24,9 @@ class SimulationsTab:
         self.populate_enabled_parameter()
         # Populate the simulations tab
         self.populate_simulations_tab(tab)
+        self.bins = 50
+        # Iterations
+        self.iterations = 10000
 
         # Initialize tab_widget here for use in run_simulation
         self.tab_widget = QTabWidget()
@@ -47,6 +50,7 @@ class SimulationsTab:
 
     def populate_enabled_parameter(self):
         self.enabled_parameter = get_enabled_parameter()  # Get the enabled parameter from the database
+        self.iterations = self.enabled_parameter[2]  # Assuming [2] is the iterations column
 
     def refresh_parameters(self):
         self.parameter_var.clear()
@@ -125,7 +129,7 @@ class SimulationsTab:
     def run_simulation(self):
         self.fetch_and_map_distributions()
         distribution_plotter = DistributionPlotter(self.params)
-        simulation_results = distribution_plotter.run_monte_carlo_simulation(iterations=1000)
+        simulation_results = distribution_plotter.run_monte_carlo_simulation(iterations=self.iterations)
 
         self.tab_widget.clear()  # Clear existing content
 
@@ -192,11 +196,11 @@ class SimulationsTab:
         fig.subplots_adjust(left=.2, right=0.95, top=0.85, bottom=0.25)
 
         # Generate histogram data
-        counts, bins, patches = ax.hist(data, bins=50, density=True, alpha=0.6, label='Histogram')
+        counts, bins, patches = ax.hist(data, bins=self.bins, density=True, alpha=0.6, label='Histogram', color='g', edgecolor='black')
 
         # Alternatively, you can add a KDE line plot
         kde = gaussian_kde(data)
-        kde_x = np.linspace(bins[0], bins[-1], 50)
+        kde_x = np.linspace(bins[0], bins[-1], self.bins)
         kde_y = kde(kde_x)
         ax.plot(kde_x, kde_y, c='darkorange', label='KDE')
 
@@ -221,26 +225,3 @@ class SimulationsTab:
         ax_cdf.tick_params(axis='both', which='major', labelsize=8)
         ax_cdf.legend()
         return fig_cdf
-
-    def modify_cdf_with_percentiles(ax_cdf, data_sorted, parameter_name):
-        # Calculate percentiles
-        percentiles = [10, 50, 90]
-        perc_values = np.percentile(data_sorted, percentiles)
-
-        # Plot the CDF
-        cdf = np.arange(len(data_sorted)) / float(len(data_sorted) - 1)
-        ax_cdf.plot(data_sorted, cdf, marker='.', linestyle='-', label='CDF')
-
-        # Add horizontal lines for percentiles
-        for perc, value in zip(percentiles, perc_values):
-            ax_cdf.axhline(y=perc / 100, color='red', linestyle='--')
-            ax_cdf.axvline(x=value, color='red', linestyle='--')
-
-            # Annotate the percentile lines
-            ax_cdf.annotate(f'{perc}%', xy=(value, perc / 100), xytext=(-35, 0),
-                            textcoords='offset points', va='center',
-                            arrowprops=dict(arrowstyle='->', color='red'),
-                            bbox=dict(boxstyle='round,pad=0.5', fc='yellow', alpha=0.5))
-
-            # Show the value at these points
-            ax_cdf.text(value, perc / 100, f'{value:.2f}', color='black', ha='right')

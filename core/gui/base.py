@@ -122,14 +122,16 @@ class MainApplication(QMainWindow):
 
 def main_gui(lang_code="en_us"):
     create_tables()
+    config_dir = os.environ['CONFIG_DIR']
+    config_path = os.path.join(config_dir, "config.json")
     try:
-        with open("config.json", "r", encoding="utf-8") as file:
+        with open(config_path, "r", encoding="utf-8") as file:
             config = json.load(file)
             app_name = config.get("application", {}).get("name", "")
             app_version = config.get("application", {}).get("version", "")
     except (FileNotFoundError, json.JSONDecodeError):
-        app_name = ""
-        app_version = ""
+        app_name = "Monte Carlo Reservoir Simulation"
+        app_version = "v0.0.1"
 
     app = QApplication(sys.argv)
     main_app = MainApplication(app_name, app_version)
