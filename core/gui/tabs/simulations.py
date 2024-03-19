@@ -33,8 +33,8 @@ class SimulationsTab:
         enabled_parameter, distributions = get_enabled_parameter_and_distributions()
 
         # Map the distributions to the expected format for self.params
-        if enabled_parameter:
-            self.params = self.map_distributions_to_params(distributions)
+        #if enabled_parameter:
+        #    self.params = self.map_distributions_to_params(distributions)
 
         # Example parameters setup for DistributionPlotter
         # self.params = {
@@ -170,7 +170,7 @@ class SimulationsTab:
 
         # Generate OOIP values from simulation results and plot OOIP PDF and CDF
         monte_carlo_simulator = MonteCarloSimulator(distribution_plotter)
-        ooip_pdf_fig, ooip_cdf_fig = monte_carlo_simulator.run_simulation(iterations=100000)
+        ooip_pdf_fig, ooip_cdf_fig = monte_carlo_simulator.run_simulation(iterations=1000)
 
         canvas_pdf = FigureCanvas(ooip_pdf_fig)
         tab_pdf = QWidget()
@@ -196,7 +196,7 @@ class SimulationsTab:
 
         # Alternatively, you can add a KDE line plot
         kde = gaussian_kde(data)
-        kde_x = np.linspace(bins[0], bins[-1], 100)
+        kde_x = np.linspace(bins[0], bins[-1], 50)
         kde_y = kde(kde_x)
         ax.plot(kde_x, kde_y, c='darkorange', label='KDE')
 

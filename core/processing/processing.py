@@ -63,7 +63,8 @@ class DistributionPlotter:
                 if distribution == 'uniform':
                     value = uniform.rvs(*distribution_params)
                 elif distribution == 'triangular':
-                    value = triang.rvs(*(distribution_params + (np.mean(distribution_params),)))
+                    c, loc, scale = distribution_params
+                    value = triang.rvs(c, loc=loc, scale=scale)
                 elif distribution == 'normal':
                     value = norm.rvs(*distribution_params)
                 elif distribution == 'log-normal':

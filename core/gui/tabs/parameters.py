@@ -226,7 +226,7 @@ class ParametersTab:
         desc_label.setStyleSheet("color: #686868;")  # Greyed out appearance
         parameter_group_layout.addWidget(desc_label, 0, 0, 1, 2)  # Span two columns for description
 
-        if parameter in ["Area", "Water Saturation"]:
+        if parameter in ["Area", "FVF"]:
             # Fields for min and max values
             min_edit = QLineEdit()
             min_edit.setPlaceholderText("Min")
@@ -237,7 +237,7 @@ class ParametersTab:
             self.parameter_vars[f"{parameter}_Min"] = min_edit
             self.parameter_vars[f"{parameter}_Max"] = max_edit
 
-        elif parameter in ["Thickness", "Porosity", "FVF"]:
+        elif parameter in ["Porosity", "Water Saturation"]:
             # Fields for mean and std deviation
             mean_edit = QLineEdit()
             mean_edit.setPlaceholderText("Mean")
@@ -247,6 +247,21 @@ class ParametersTab:
             parameter_group_layout.addWidget(std_dev_edit, 1, 1)
             self.parameter_vars[f"{parameter}_Mean"] = mean_edit
             self.parameter_vars[f"{parameter}_Std_dev"] = std_dev_edit
+
+        elif parameter in ["Thickness"]:
+            # Fields for min, mode, and max values
+            min_edit = QLineEdit()
+            min_edit.setPlaceholderText("Min")
+            mode_edit = QLineEdit()
+            mode_edit.setPlaceholderText("Mode")
+            max_edit = QLineEdit()
+            max_edit.setPlaceholderText("Max")
+            parameter_group_layout.addWidget(min_edit, 1, 0)
+            parameter_group_layout.addWidget(mode_edit, 1, 1)
+            parameter_group_layout.addWidget(max_edit, 1, 2)
+            self.parameter_vars[f"{parameter}_Min"] = min_edit
+            self.parameter_vars[f"{parameter}_Mode"] = mode_edit
+            self.parameter_vars[f"{parameter}_Max"] = max_edit
 
         else:
             # Single field for Name and Iterations
@@ -397,16 +412,11 @@ class ParametersTab:
         iterations = self.parameter_vars["Iterations"].text().strip()
 
         distributions_for_parameters = {
-            # "Area": ["Uniform", "Triangular"],
             "Area": ["Uniform"],
-            # "Thickness": ["Normal", "Log-normal"],
-            "Thickness": ["Normal"],
-            # "Porosity": ["Normal", "Log-normal"],
+            "Thickness": ["Triangular"],
             "Porosity": ["Normal"],
-            # "Water Saturation": ["Normal", "Log-normal", ],
-            "Water Saturation": ["Uniform"],
-            # "FVF": ["Flexible"]  # Example for FVF
-            "FVF": ["Normal"]
+            "Water Saturation": ["Normal"],
+            "FVF": ["Uniform"]
         }
 
         # Validate basic parameter data
@@ -426,7 +436,7 @@ class ParametersTab:
         # Example: Collect and validate distribution data for 'Area'
         # area_data = self.collect_distribution_data("Area")
         for parameter_name, distribution_types in distributions_for_parameters.items():
-            if f"{parameter_name}_Min" or f"{parameter_name}_Std_dev" in self.parameter_vars:
+            if f"{parameter_name}_Min" or f"{parameter_name}_Std_dev" or f"{parameter_name}_Mode" in self.parameter_vars:
                 for dist_type in distribution_types:
                     print(f"Processing distribution type: {dist_type}")
                     data = self.collect_distribution_data(parameter_name, dist_type)
@@ -480,36 +490,34 @@ class ParametersTab:
         return parameter_data
 
     def collect_distribution_data(self, parameter_name, distribution_type):
-        # Example for Area; adapt for other parameters
+        # Initialize all variables to None at the start
+        min_value = None
+        max_value = None
+        std_value = None
+        mean_value = None
+        mode_value = None
 
-        if distribution_type == "Flexible":
+        # Conditional assignments based on distribution type
+        if distribution_type == "Flexible" or distribution_type == "Uniform":
             min_value = self.parameter_vars[f"{parameter_name}_Min"].text().strip()
             max_value = self.parameter_vars[f"{parameter_name}_Max"].text().strip()
         elif distribution_type == "Normal" or distribution_type == "Log-normal":
             mean_value = self.parameter_vars[f"{parameter_name}_Mean"].text().strip()
             std_value = self.parameter_vars[f"{parameter_name}_Std_dev"].text().strip()
-        elif distribution_type == "Triangular" or "Uniform":
+        elif distribution_type == "Triangular":
             min_value = self.parameter_vars[f"{parameter_name}_Min"].text().strip()
+            mode_value = self.parameter_vars[f"{parameter_name}_Mode"].text().strip()
             max_value = self.parameter_vars[f"{parameter_name}_Max"].text().strip()
-        # min_value = self.parameter_vars[f"{parameter_name}_Min"].text().strip()
-        # max_value = self.parameter_vars[f"{parameter_name}_Max"].text().strip()
-        # std_value = self.parameter_vars[f"{parameter_name}_Std_dev"].text().strip()
-        # mean_value = self.parameter_vars[f"{parameter_name}_Mean"].text().strip()
-        # mode_value = self.parameter_vars[f"{parameter_name}_Mode"].text().strip()
 
-        # Validate distribution data as needed
-        # if not min_value or not max_value:
-        #     return None
-
+        # Return a dictionary with the collected values, using conditional expressions to include relevant ones
         return {
             "Parameter_name": parameter_name,
             "Distribution_type": distribution_type,
-            "Min_value": min_value if distribution_type in ["Triangular", "Uniform", "Flexible"] else None,
-            "Max_value": max_value if distribution_type in ["Triangular", "Uniform", "Flexible"] else None,
-            "Std_dev": std_value if distribution_type in ["Normal", "Log-normal"] else None,
-            "Mean": mean_value if distribution_type in ["Normal", "Log-normal"] else None,
-            # "Mode_value": mode_value
-            # Add other fields as necessary
+            "Min_value": min_value,
+            "Max_value": max_value,
+            "Std_dev": std_value,
+            "Mean": mean_value,
+            "Mode": mode_value
         }
 
     def apply_parameters(self):
