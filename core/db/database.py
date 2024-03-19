@@ -109,6 +109,25 @@ def get_enabled_parameter():
         print(enabled_param)
         return enabled_param if enabled_param else []
 
+def get_enabled_parameter_and_distributions():
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        # Fetch the enabled parameter
+        cursor.execute("SELECT id, name FROM parameters WHERE enabled = 1 LIMIT 1")
+        enabled_param = cursor.fetchone()
+        if not enabled_param:
+            return None, []
+
+        param_id, param_name = enabled_param
+
+        # Fetch distributions for the enabled parameter
+        cursor.execute("""
+            SELECT parameter_name, distribution_type, mean, std_dev, min_value, max_value, mode_value
+            FROM distributions
+            WHERE parameter_id = ?
+        """, (param_id,))
+        distributions = cursor.fetchall()
+        return param_name, distributions
 
 def get_distributions_by_parameter_id(parameter_id):
     with get_db_connection() as conn:

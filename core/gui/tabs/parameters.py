@@ -226,7 +226,7 @@ class ParametersTab:
         desc_label.setStyleSheet("color: #686868;")  # Greyed out appearance
         parameter_group_layout.addWidget(desc_label, 0, 0, 1, 2)  # Span two columns for description
 
-        if parameter in ["Area", "FVF"]:
+        if parameter in ["Area", "Water Saturation"]:
             # Fields for min and max values
             min_edit = QLineEdit()
             min_edit.setPlaceholderText("Min")
@@ -237,7 +237,7 @@ class ParametersTab:
             self.parameter_vars[f"{parameter}_Min"] = min_edit
             self.parameter_vars[f"{parameter}_Max"] = max_edit
 
-        elif parameter in ["Thickness", "Water Saturation", "Porosity"]:
+        elif parameter in ["Thickness", "Porosity", "FVF"]:
             # Fields for mean and std deviation
             mean_edit = QLineEdit()
             mean_edit.setPlaceholderText("Mean")
@@ -397,11 +397,16 @@ class ParametersTab:
         iterations = self.parameter_vars["Iterations"].text().strip()
 
         distributions_for_parameters = {
-            "Area": ["Uniform", "Triangular"],
-            "Thickness": ["Normal", "Log-normal"],
-            "Porosity": ["Normal", "Log-normal"],
-            "Water Saturation": ["Normal", "Log-normal", ],
-            "FVF": ["Flexible"]  # Example for FVF
+            # "Area": ["Uniform", "Triangular"],
+            "Area": ["Uniform"],
+            # "Thickness": ["Normal", "Log-normal"],
+            "Thickness": ["Normal"],
+            # "Porosity": ["Normal", "Log-normal"],
+            "Porosity": ["Normal"],
+            # "Water Saturation": ["Normal", "Log-normal", ],
+            "Water Saturation": ["Uniform"],
+            # "FVF": ["Flexible"]  # Example for FVF
+            "FVF": ["Normal"]
         }
 
         # Validate basic parameter data

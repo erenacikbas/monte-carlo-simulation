@@ -7,8 +7,9 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
+from scipy.stats import gaussian_kde
 
-from core.db.database import get_enabled_parameter
+from core.db.database import get_enabled_parameter, get_enabled_parameter_and_distributions
 from core.sim.monte_carlo.monte_carlo import MonteCarloSimulator
 from core.processing.processing import DistributionPlotter
 
@@ -28,14 +29,21 @@ class SimulationsTab:
         self.tab_widget = QTabWidget()
         tab.layout().addWidget(self.tab_widget)  # Ensure the tab_widget is added to the layout
 
+        # Get the enabled parameter and its distributions
+        enabled_parameter, distributions = get_enabled_parameter_and_distributions()
+
+        # Map the distributions to the expected format for self.params
+        if enabled_parameter:
+            self.params = self.map_distributions_to_params(distributions)
+
         # Example parameters setup for DistributionPlotter
-        self.params = {
-            'area': ('uniform', (0, 100)),
-            'thickness': ('log-normal', (2.0, 0.5)),
-            'porosity': ('normal', (0.16, 0.0254)),
-            'water_saturation': ('uniform', (0, 1)),
-            'fvf': ('normal', (1.0, 0.1))
-        }
+        # self.params = {
+        #     'area': ('uniform', (0, 1000000)),
+        #     'thickness': ('normal', (27.6, 8.29)),
+        #     'porosity': ('normal', (0.16, 0.0254)),
+        #     'water_saturation': ('uniform', (0, 1)),
+        #     'fvf': ('normal', (1.0, 0.1))
+        # }
 
     def populate_enabled_parameter(self):
         self.enabled_parameter = get_enabled_parameter()  # Get the enabled parameter from the database
@@ -76,7 +84,46 @@ class SimulationsTab:
 
         layout.addWidget(self.parameter_var)
 
+    def fetch_and_map_distributions(self):
+        # Get the enabled parameter and its distributions
+        enabled_parameter, distributions = get_enabled_parameter_and_distributions()
+
+        # Check if an enabled parameter was found and has distributions
+        if enabled_parameter and distributions:
+            self.params = self.map_distributions_to_params(distributions)
+            print(self.params)
+        else:
+            self.params = {}  # Fallback if no enabled parameter or distributions
+
+    def map_distributions_to_params(self, distributions):
+        params = {}
+        for dist in distributions:
+            param_name = dist[0]  # Assuming the third column in the database is the parameter_name
+            dist_type = dist[1].lower()  # Assuming the fourth column in the database is the distribution_type
+            mean = dist[2]
+            std_dev = dist[3]
+            min_val = dist[4]
+            max_val = dist[5]
+            mode_val = dist[6]  # This may not be used for all distributions
+
+            if dist_type == 'normal':
+                params[param_name] = ('normal', (mean, std_dev))
+            elif dist_type == 'log-normal':
+                # If your log-normal is parameterized differently, adjust the following line accordingly
+                params[param_name] = ('log-normal', (mean, std_dev))
+            elif dist_type == 'uniform':
+                # Uniform distribution in scipy.stats takes loc and scale parameters
+                # loc is the lower bound, and scale is the width of the distribution
+                params[param_name] = ('uniform', (min_val, max_val - min_val))
+            elif dist_type == 'triangular':
+                # For triangular distribution, c is the mode expressed as a fraction of the total range
+                c = (mode_val - min_val) / (max_val - min_val)
+                params[param_name] = ('triangular', (c, min_val, max_val - min_val))
+            # ... handle other distribution types if any ...
+        return params
+
     def run_simulation(self):
+        self.fetch_and_map_distributions()
         distribution_plotter = DistributionPlotter(self.params)
         simulation_results = distribution_plotter.run_monte_carlo_simulation(iterations=1000)
 
@@ -123,7 +170,7 @@ class SimulationsTab:
 
         # Generate OOIP values from simulation results and plot OOIP PDF and CDF
         monte_carlo_simulator = MonteCarloSimulator(distribution_plotter)
-        ooip_pdf_fig, ooip_cdf_fig = monte_carlo_simulator.run_simulation(iterations=1000)
+        ooip_pdf_fig, ooip_cdf_fig = monte_carlo_simulator.run_simulation(iterations=100000)
 
         canvas_pdf = FigureCanvas(ooip_pdf_fig)
         tab_pdf = QWidget()
@@ -139,25 +186,39 @@ class SimulationsTab:
         self.tab_widget.addTab(tab_cdf, "OOIP CDF")
 
     def plot_parameter_pdf(self, data, parameter_name):
-        # Calculate and plot PDF
-        fig_pdf = Figure(figsize=(5, 4), dpi=100)
-        ax_pdf = fig_pdf.add_subplot(111)
-        ax_pdf.hist(data, bins=50, density=True, alpha=0.6, label='Histogram')
-        ax_pdf.set_title(f"{parameter_name.capitalize()} PDF")
-        ax_pdf.set_xlabel(parameter_name.capitalize())
-        ax_pdf.set_ylabel('Probability Density')
-        ax_pdf.legend()
-        return fig_pdf
+        fig = Figure(figsize=(6, 5), dpi=100)
+        ax = fig.add_subplot(111)
+        # Adjust subplot parameters for better layout
+        fig.subplots_adjust(left=.2, right=0.95, top=0.85, bottom=0.25)
+
+        # Generate histogram data
+        counts, bins, patches = ax.hist(data, bins=50, density=True, alpha=0.6, label='Histogram')
+
+        # Alternatively, you can add a KDE line plot
+        kde = gaussian_kde(data)
+        kde_x = np.linspace(bins[0], bins[-1], 100)
+        kde_y = kde(kde_x)
+        ax.plot(kde_x, kde_y, c='darkorange', label='KDE')
+
+        ax.set_title(f"{parameter_name.capitalize()} PDF", fontsize=8)
+        ax.set_xlabel('Value', fontsize=8)
+        ax.set_ylabel('Probability Density', fontsize=8)
+        ax.tick_params(axis='both', which='major', labelsize=8)
+        ax.legend(fontsize=8)
+        return fig
 
     def plot_parameter_cdf(self, data, parameter_name):
         # Calculate and plot CDF
         data_sorted = np.sort(data)
         cdf = np.arange(len(data)) / (len(data) - 1)
-        fig_cdf = Figure(figsize=(5, 4), dpi=100)
+        fig_cdf = Figure(figsize=(6, 5), dpi=100)
         ax_cdf = fig_cdf.add_subplot(111)
-        ax_cdf.plot(data_sorted, cdf, marker='.', linestyle='none', label='CDF')
-        ax_cdf.set_title(f"{parameter_name.capitalize()} CDF")
-        ax_cdf.set_xlabel(parameter_name.capitalize())
-        ax_cdf.set_ylabel('Cumulative Probability')
+        fig_cdf.subplots_adjust(left=.2, right=0.95, top=0.85, bottom=0.25)
+        ax_cdf.plot(data_sorted, cdf, marker='.', linestyle='', label='CDF')
+        ax_cdf.set_title(f"{parameter_name.capitalize()} CDF", fontsize=8)
+        ax_cdf.set_xlabel(parameter_name.capitalize(), fontsize=8)
+        ax_cdf.set_ylabel('Cumulative Probability', fontsize=8)
+        ax_cdf.tick_params(axis='both', which='major', labelsize=8)
         ax_cdf.legend()
         return fig_cdf
+
