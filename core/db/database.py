@@ -108,6 +108,7 @@ def get_enabled_parameter():
         enabled_param = cursor.fetchone()
         return enabled_param if enabled_param else []
 
+
 def get_enabled_parameter_and_distributions():
     with get_db_connection() as conn:
         cursor = conn.cursor()
@@ -127,6 +128,7 @@ def get_enabled_parameter_and_distributions():
         """, (param_id,))
         distributions = cursor.fetchall()
         return param_name, distributions
+
 
 def get_distributions_by_parameter_id(parameter_id):
     with get_db_connection() as conn:

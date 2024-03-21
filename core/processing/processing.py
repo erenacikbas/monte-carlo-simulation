@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.stats import norm, lognorm, uniform, triang
+from scipy.stats import norm, lognorm, uniform, triang, beta
 
 
 class DistributionPlotter:
@@ -18,15 +18,22 @@ class DistributionPlotter:
         plt.figure(figsize=(10, 6))
         plt.hist(data, bins=50, density=True, alpha=0.6, color='g', edgecolor='black')
 
-        # Fit and plot a theoretical distribution
         xmin, xmax = plt.xlim()
         x = np.linspace(xmin, xmax, 100)
         distribution, params = self.parameters[parameter_name]
-        if distribution == 'normal' or distribution == 'log-normal':
+        if distribution == 'normal':
             p = norm.pdf(x, np.mean(data), np.std(data))
+        elif distribution == 'log-normal':
+            scale = np.exp(params[0])
+            p = lognorm.pdf(x, params[1], scale=scale)
         elif distribution == 'uniform':
             p = uniform.pdf(x, min(data), max(data) - min(data))
-        # Add other distributions as needed
+        elif distribution == 'triangular':
+            c, loc, scale = params
+            p = triang.pdf(x, c, loc=loc, scale=scale)
+        elif distribution == 'beta':
+            a, b, loc, scale = params
+            p = beta.pdf(x, a, b, loc, scale)
 
         plt.plot(x, p, 'k', linewidth=2)
         title = f'Fit results: {parameter_name.capitalize()}'
@@ -70,6 +77,9 @@ class DistributionPlotter:
                 elif distribution == 'log-normal':
                     scale = np.exp(distribution_params[0])
                     value = lognorm.rvs(distribution_params[1], scale=scale)
+                elif distribution == 'beta':
+                    a, b, loc, scale = distribution_params
+                    value = beta.rvs(a, b, loc, scale)
                 else:
                     continue  # Skip unsupported distributions
 

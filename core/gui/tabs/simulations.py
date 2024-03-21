@@ -26,7 +26,7 @@ class SimulationsTab:
         self.populate_simulations_tab(tab)
         self.bins = 50
         # Iterations
-        self.iterations = 10000
+        self.iterations = 0
 
         # Initialize tab_widget here for use in run_simulation
         self.tab_widget = QTabWidget()
@@ -51,6 +51,7 @@ class SimulationsTab:
     def populate_enabled_parameter(self):
         self.enabled_parameter = get_enabled_parameter()  # Get the enabled parameter from the database
         self.iterations = self.enabled_parameter[2]  # Assuming [2] is the iterations column
+        print("Iterations: ", self.iterations)
 
     def refresh_parameters(self):
         self.parameter_var.clear()
@@ -114,7 +115,7 @@ class SimulationsTab:
                 params[param_name] = ('normal', (mean, std_dev))
             elif dist_type == 'log-normal':
                 # If your log-normal is parameterized differently, adjust the following line accordingly
-                params[param_name] = ('log-normal', (mean, std_dev))
+                params[param_name] = ('log-normal', (np.log(mean), std_dev))
             elif dist_type == 'uniform':
                 # Uniform distribution in scipy.stats takes loc and scale parameters
                 # loc is the lower bound, and scale is the width of the distribution
@@ -123,6 +124,12 @@ class SimulationsTab:
                 # For triangular distribution, c is the mode expressed as a fraction of the total range
                 c = (mode_val - min_val) / (max_val - min_val)
                 params[param_name] = ('triangular', (c, min_val, max_val - min_val))
+            elif dist_type == 'beta':
+                # Ensure your mean and std_dev are for data scaled to [0, 1]
+                alpha = mean * ((mean * (1 - mean) / std_dev ** 2) - 1)
+                beta = (1 - mean) * ((mean * (1 - mean) / std_dev ** 2) - 1)
+                params[param_name] = ('beta', (alpha, beta, 0, 1))
+
             # ... handle other distribution types if any ...
         return params
 
@@ -174,7 +181,7 @@ class SimulationsTab:
 
         # Generate OOIP values from simulation results and plot OOIP PDF and CDF
         monte_carlo_simulator = MonteCarloSimulator(distribution_plotter)
-        ooip_pdf_fig, ooip_cdf_fig = monte_carlo_simulator.run_simulation(iterations=1000)
+        ooip_pdf_fig, ooip_cdf_fig, roip_pdf_fig, roip_cdf_fig = monte_carlo_simulator.run_simulation(iterations=self.iterations)
 
         canvas_pdf = FigureCanvas(ooip_pdf_fig)
         tab_pdf = QWidget()
@@ -188,6 +195,31 @@ class SimulationsTab:
         layout_cdf = QVBoxLayout(tab_cdf)
         layout_cdf.addWidget(canvas_cdf)
         self.tab_widget.addTab(tab_cdf, "OOIP CDF")
+
+        canvas_pdf = FigureCanvas(roip_pdf_fig)
+        tab_pdf = QWidget()
+        layout_pdf = QVBoxLayout(tab_pdf)
+        layout_pdf.addWidget(canvas_pdf)
+        self.tab_widget.addTab(tab_pdf, "ROIP PDF")
+
+        # Create and add a canvas for the CDF figure
+        canvas_cdf = FigureCanvas(roip_cdf_fig)
+        tab_cdf = QWidget()
+        layout_cdf = QVBoxLayout(tab_cdf)
+        layout_cdf.addWidget(canvas_cdf)
+        self.tab_widget.addTab(tab_cdf, "ROIP CDF")
+
+        # Inside your run_simulation method, adjust the savefig calls like so:
+        ooip_pdf_fig.savefig("ooip_pdf.png", dpi=300, format='png')  # High resolution
+        ooip_cdf_fig.savefig("ooip_cdf.png", dpi=300, format='png')  # High resolution
+        roip_pdf_fig.savefig("roip_pdf.png", dpi=300, format='png')  # High resolution
+        roip_cdf_fig.savefig("roip_cdf.png", dpi=300, format='png')  # High resolution
+
+        # Alternatively, for vector graphics which are resolution-independent, you can use SVG
+        ooip_pdf_fig.savefig("ooip_pdf.svg", format='svg')  # Vector graphic
+        ooip_cdf_fig.savefig("ooip_cdf.svg", format='svg')  # Vector graphic
+        roip_pdf_fig.savefig("roip_pdf.svg", format='svg')  # Vector graphic
+        roip_cdf_fig.savefig("roip_cdf.svg", format='svg')  # Vector graphic
 
     def plot_parameter_pdf(self, data, parameter_name):
         fig = Figure(figsize=(6, 5), dpi=100)
@@ -209,6 +241,7 @@ class SimulationsTab:
         ax.set_ylabel('Probability Density', fontsize=8)
         ax.tick_params(axis='both', which='major', labelsize=8)
         ax.legend(fontsize=8)
+        fig.savefig(f"{parameter_name}_pdf.svg", dpi=300, format='svg')
         return fig
 
     def plot_parameter_cdf(self, data, parameter_name):
@@ -224,4 +257,5 @@ class SimulationsTab:
         ax_cdf.set_ylabel('Cumulative Probability', fontsize=8)
         ax_cdf.tick_params(axis='both', which='major', labelsize=8)
         ax_cdf.legend()
+        fig_cdf.savefig(f"{parameter_name}_cdf.svg", dpi=300, format='svg')
         return fig_cdf

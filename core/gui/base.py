@@ -71,8 +71,8 @@ class MainApplication(QMainWindow):
         self.tab_widget.addTab(self.simulation_tab, self.lang.get("simulations", "Simulations"))
 
         # Plot Tab
-        plot_tab = QWidget()
-        self.tab_widget.addTab(plot_tab, self.lang.get("results", "Results"))
+        # plot_tab = QWidget()
+        # self.tab_widget.addTab(plot_tab, self.lang.get("results", "Results"))
 
         # Settings Tab
         settings_tab = QWidget()
