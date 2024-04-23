@@ -44,7 +44,7 @@ class MainApplication(QMainWindow):
     def resize_app(self):
         # Retrieve the size of the screen
         screen = QApplication.primaryScreen().geometry()
-        width = int(screen.width() * 0.4)  # 40% of the screen width, converted to int
+        width = int(screen.width() * 0.5)  # 50% of the screen width, converted to int
         height = int(screen.height() * 0.8)  # 80% of the screen height, converted to int
 
         # Calculate the center point for the application window
@@ -66,12 +66,13 @@ class MainApplication(QMainWindow):
         # Simulation Tab
         self.simulation_tab = QWidget()
         # Keep a reference to the SimulationsTab instance
-        self.simulations_tab_instance = SimulationsTab(self, self.simulation_tab)
+        # Assuming 'simulation_tab_widget' is the QWidget or QTabWidget you want to use as the container
+        self.simulations_tab_instance = SimulationsTab(context=self, tab=self.simulation_tab)
         self.tab_widget.addTab(self.simulation_tab, self.lang.get("simulations", "Simulations"))
 
         # Plot Tab
-        plot_tab = QWidget()
-        self.tab_widget.addTab(plot_tab, self.lang.get("results", "Results"))
+        # plot_tab = QWidget()
+        # self.tab_widget.addTab(plot_tab, self.lang.get("results", "Results"))
 
         # Settings Tab
         settings_tab = QWidget()
@@ -121,14 +122,16 @@ class MainApplication(QMainWindow):
 
 def main_gui(lang_code="en_us"):
     create_tables()
+    config_dir = os.environ['CONFIG_DIR']
+    config_path = os.path.join(config_dir, "config.json")
     try:
-        with open("config.json", "r", encoding="utf-8") as file:
+        with open(config_path, "r", encoding="utf-8") as file:
             config = json.load(file)
             app_name = config.get("application", {}).get("name", "")
             app_version = config.get("application", {}).get("version", "")
     except (FileNotFoundError, json.JSONDecodeError):
-        app_name = ""
-        app_version = ""
+        app_name = "Monte Carlo Reservoir Simulation"
+        app_version = "v0.0.1"
 
     app = QApplication(sys.argv)
     main_app = MainApplication(app_name, app_version)

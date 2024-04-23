@@ -1,6 +1,7 @@
+from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
     QVBoxLayout, QFrame, QLabel, QTreeWidget, QTreeWidgetItem, QLineEdit, QPushButton, QErrorMessage, QAbstractItemView,
-    QGridLayout
+    QGridLayout, QGroupBox, QHBoxLayout
 )
 from core.db.database import activate_parameter, delete_parameter, insert_parameters, list_parameters, \
     update_parameter_by_id
@@ -27,6 +28,14 @@ class ParametersTab:
 
         self.populate_parameters_tab(tab)
 
+        # Initialize UI state
+        self.initializeUI()
+
+    def initializeUI(self):
+        # Initially hide the ID field
+        if "Id" in self.parameter_vars:
+            self.parameter_vars["Id"].setVisible(False)
+
     def update_save_button_state(self):
         if self.pending_changes:
             self.save_button.setEnabled(True)
@@ -34,14 +43,25 @@ class ParametersTab:
             self.save_button.setEnabled(False)
 
     def load_parameter_details(self, item, column):
+        # When loading details for updating, make ID visible but read-only
         self.current_id = int(item.text(0))
-        details = [item.text(i) for i in range(self.parameters_table.columnCount())]
-        for i, key in enumerate(self.parameter_vars.keys()):
-            self.parameter_vars[key].setText(details[i])
-            self.original_values[key] = details[i]
-        for i, (key, entry) in enumerate(self.parameter_vars.items()):
-            entry.setText(details[i])
-            self.original_values[key] = details[i]  # Store the original value
+        if "Id" in self.parameter_vars:
+            self.parameter_vars["Id"].setVisible(True)
+            self.parameter_vars["Id"].setReadOnly(True)
+            self.parameter_vars["Id"].setStyleSheet("background-color: #e0e0e0;")
+            self.parameter_vars["Id"].setText(str(self.current_id))
+
+        # Clear previous values
+        for key in self.parameter_vars.keys():
+            self.parameter_vars[key].setText("")
+
+        # Load new values from selected item
+        for i, key in enumerate(
+                ["Id", "Name", "Iterations", "Area", "Thickness", "Porosity", "Water Saturation", "FVF"]):
+            value = item.text(i) if i < item.columnCount() else ""
+            if key in self.parameter_vars:
+                self.parameter_vars[key].setText(value)
+                self.original_values[key] = value
 
         self.create_or_update_button.setText(self.lang.get("update_parameter", "Update Parameter"))
         self.create_or_update_button.setEnabled(True)
@@ -148,58 +168,155 @@ class ParametersTab:
             self.load_param_button.setText(self.lang.get("load_parameter", "Load Parameter"))
 
     def create_parameter_form(self, parent_layout):
-        # Define your parameters here. Assume "Id" is for display only and should not be editable.
-        parameters = {
-            "Id": "Unique ID for the parameter configuration",
+        # Parameters with descriptions
+        parameter_descriptions = {
+            "Id": "This reference will be auto-generated",
             "Name": "Unique name for the parameter configuration",
-            "Iterations": "Number of sim iterations",
-            "Area": "Area covered by the sim",
-            "Thickness": "Thickness of the material",
-            "Porosity": "Porosity of the material",
-            "Water Saturation": "Water saturation in the material",
-            "FVF": "Formation Volume Factor"
+            "Iterations": "Number of simulation iterations",
+            "Area": "Area covered by the simulation (Uniform or Triangular distribution)",
+            "Thickness": "Thickness of the material (Normal or Log-normal distribution)",
+            "Porosity": "Porosity of the material (Normal or Log-normal distribution)",
+            "Water Saturation": "Water saturation in the material (Uniform or Normal/Log-normal distribution)",
+            "FVF": "Formation Volume Factor (Flexible distribution based on data)"
         }
 
-        # Initialize the grid layout for form fields
-        grid_layout = QGridLayout()
+        if "Id" in self.parameter_vars:
+            self.parameter_vars["Id"].setReadOnly(True)  # Make ID field read-only
 
-        row = 0
-        for parameter, description in parameters.items():
-            label = QLabel(f"{parameter}:")
-            grid_layout.addWidget(label, row, 0)  # Add the label to the grid layout
+        # Convert the parameter_descriptions dict into a list of tuples for easier grouping
+        parameters_list = list(parameter_descriptions.items())
 
-            if parameter == "Id":
-                # For the "Id" field, use a QLineEdit but set it as read-only
-                value_display = QLineEdit()
-                value_display.setReadOnly(True)
-                value_display.setStyleSheet("QLineEdit { background-color: #f0f0f0; }")  # Optional styling to indicate non-editability
-            else:
-                # For all other parameters, use a regular QLineEdit
-                value_display = QLineEdit()
+        # Create rows with two parameters each
+        for i in range(0, len(parameters_list), 2):
+            # Create a horizontal layout for each row
+            row_layout = QHBoxLayout()
 
-            self.parameter_vars[parameter] = value_display  # Store the QLineEdit (or QLabel) for later use
-            grid_layout.addWidget(value_display, row, 1)  # Add the QLineEdit to the grid layout
+            if "Id" in self.parameter_vars:
+                self.parameter_vars["Id"].setReadOnly(True)  # Make ID field read-only
 
-            # Optionally, add a description label below each input for clarity
-            desc_label = QLabel(f"Description: {description}")
-            desc_label.setStyleSheet("QLabel { font-size: 8pt; color: gray; }")
-            grid_layout.addWidget(desc_label, row + 1, 0, 1, 2)  # Span the description label across both columns
+            # Initialize a variable to keep track of the number of group boxes added to the row
+            groupBoxCount = 0
 
-            row += 2  # Increment the row. Skip an extra row for the description.
+            # Process two parameters at a time, creating a group box for each
+            for j in range(2):
+                if i + j < len(parameters_list):
+                    parameter, description = parameters_list[i + j]
+                    parameter_group_box = self.create_parameter_group_box(parameter, description)
+                    row_layout.addWidget(parameter_group_box, 1)  # Add group box with a stretch factor of 1
+                    groupBoxCount += 1
 
-        # Add the complete grid layout to the parent layout of the form
-        parent_layout.addLayout(grid_layout)
+            # Ensure that if only one group box is added, it still occupies half the width
+            if groupBoxCount == 1:
+                row_layout.addStretch(1)  # Add a stretchable space with the same factor to balance the layout
+
+            # Add the row layout to the parent layout
+            parent_layout.addLayout(row_layout)
+
+    def create_parameter_group_box(self, parameter, description):
+        # Create a group box for the parameter
+        parameter_group_box = QGroupBox(f"{parameter}")
+        parameter_group_box.setFont(QFont("Arial", 12, QFont.Weight.Bold))  # Larger font for titles
+
+        parameter_group_layout = QGridLayout(parameter_group_box)
+
+        # Parameter Description
+        desc_label = QLabel(description)
+        desc_label.setWordWrap(True)  # Enable word wrap for longer descriptions
+        desc_label.setFont(QFont("Arial", 10))  # Smaller font for descriptions
+        desc_label.setStyleSheet("color: #686868;")  # Greyed out appearance
+        parameter_group_layout.addWidget(desc_label, 0, 0, 1, 2)  # Span two columns for description
+
+        if parameter in ["FVF"]:
+            # Fields for min and max values
+            min_edit = QLineEdit()
+            min_edit.setPlaceholderText("Min")
+            max_edit = QLineEdit()
+            max_edit.setPlaceholderText("Max")
+            parameter_group_layout.addWidget(min_edit, 1, 0)
+            parameter_group_layout.addWidget(max_edit, 1, 1)
+            self.parameter_vars[f"{parameter}_Min"] = min_edit
+            self.parameter_vars[f"{parameter}_Max"] = max_edit
+
+        elif parameter in ["Porosity", "Water Saturation"]:
+            # Fields for mean and std deviation
+            mean_edit = QLineEdit()
+            mean_edit.setPlaceholderText("Mean")
+            std_dev_edit = QLineEdit()
+            std_dev_edit.setPlaceholderText("Std Dev")
+            parameter_group_layout.addWidget(mean_edit, 1, 0)
+            parameter_group_layout.addWidget(std_dev_edit, 1, 1)
+            self.parameter_vars[f"{parameter}_Mean"] = mean_edit
+            self.parameter_vars[f"{parameter}_Std_dev"] = std_dev_edit
+
+        elif parameter in ["Area", "Thickness"]:
+            # Fields for min, mode, and max values
+            min_edit = QLineEdit()
+            min_edit.setPlaceholderText("Min")
+            mode_edit = QLineEdit()
+            mode_edit.setPlaceholderText("Mode")
+            max_edit = QLineEdit()
+            max_edit.setPlaceholderText("Max")
+            parameter_group_layout.addWidget(min_edit, 1, 0)
+            parameter_group_layout.addWidget(mode_edit, 1, 1)
+            parameter_group_layout.addWidget(max_edit, 1, 2)
+            self.parameter_vars[f"{parameter}_Min"] = min_edit
+            self.parameter_vars[f"{parameter}_Mode"] = mode_edit
+            self.parameter_vars[f"{parameter}_Max"] = max_edit
+
+        else:
+            # Single field for Name and Iterations
+            value_edit = QLineEdit()
+            value_edit.setPlaceholderText(description)
+            parameter_group_layout.addWidget(value_edit, 1, 0, 1, 2)  # Span two columns for single fields
+            self.parameter_vars[parameter] = value_edit
+
+        return parameter_group_box
+
+    def create_distribution_input_section(self, grid_layout, parameter_name, start_row):
+        # Section label
+        section_label = QLabel(f"{parameter_name} Distribution")
+        section_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+        grid_layout.addWidget(section_label, start_row, 0, 1, 2)  # Span 2 columns
+
+        # Distribution types
+        dist_types = ["Normal", "Log-normal", "Triangular", "Uniform"]
+
+        # For each distribution type, add a row of inputs
+        for i, dist_type in enumerate(dist_types, start=1):
+            # Distribution type label
+            row = start_row + i
+            type_label = QLabel(f"{dist_type}:")
+            grid_layout.addWidget(type_label, row, 0)
+
+            # Add input fields for distribution parameters
+            param_names = self.get_param_names_for_distribution(dist_type)
+            for j, param_name in enumerate(param_names, start=1):
+                line_edit = QLineEdit()
+                line_edit.setPlaceholderText(param_name)
+                grid_layout.addWidget(line_edit, row, j)
+                self.parameter_vars[f"{parameter_name}_{dist_type}_{param_name}"] = line_edit
+
+    def get_param_names_for_distribution(self, dist_type):
+        # Returns the names of parameters based on distribution type
+        if dist_type == "Normal" or dist_type == "Log-normal":
+            return ["Mean", "Std Dev"]
+        elif dist_type == "Triangular":
+            return ["Min", "Mode", "Max"]
+        elif dist_type == "Uniform":
+            return ["Min", "Max"]
+        else:
+            raise ValueError(f"Unknown distribution type: {dist_type}")
 
     def setup_parameter_table(self, parent):
         # Initialize the table as before but add it directly to the main layout
         self.apply_button = QPushButton(self.lang.get("create_new_parameter", "Create New Parameter"))
         self.parameters_table = QTreeWidget()
         self.parameters_table.setIndentation(0)  # This sets the indentation to 0 pixels
-        self.parameters_table.setHeaderLabels(
-            ['Id', 'Name', 'Iterations', 'Area', 'Thickness', 'Porosity', 'Water Saturation', 'Formation Volume Factor',
-             'Created At',
-             'Updated At',
-             'Enabled'])
+        self.parameters_table.setHeaderLabels([
+            'ID', 'Name', 'Iterations', 'Enabled', 'Created At', 'Updated At'
+            # 'Parameter Name', 'Distribution Type',
+            # 'Mean', 'Std Dev', 'Min', 'Max', 'Mode', 'Created At', 'Updated At'
+        ])
         self.parameters_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.parameters_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.parameters_table.setAlternatingRowColors(True)
@@ -213,35 +330,30 @@ class ParametersTab:
         self.current_id = None
         for key in self.parameter_vars:
             self.parameter_vars[key].setText("")
+            if key == "Id":
+                self.parameter_vars[key].setVisible(False)  # Hide the ID field
+            else:
+                self.parameter_vars[key].setVisible(True)  # Show all other fields
         self.create_or_update_button.setText(self.lang.get("create_new_parameter", "Create New Parameter"))
         self.create_or_update_button.setEnabled(True)
 
     def load_parameter_details(self, item, column):
-        # Assuming the first column contains the unique ID
         self.current_id = int(item.text(0))
-        self.parameter_vars["Id"].setText(str(self.current_id))  # Works for both QLabel and QLineEdit
-        # Assuming the 'enabled' status is in the last column
-        is_enabled = item.text(self.parameters_table.columnCount() - 1)
+        for key in self.parameter_vars:
+            if key == "Id":
+                self.parameter_vars[key].setText(str(self.current_id))
+                self.parameter_vars[key].setVisible(True)  # Make the ID field visible and read-only
+                self.parameter_vars[key].setReadOnly(True)
+                self.parameter_vars[key].setStyleSheet("QLineEdit { background-color: #e0e0e0; color: #a0a0a0; }")
+            else:
+                self.parameter_vars[key].setText("")  # Clear the text for other fields or set them as needed
 
-        # Populate the form fields with details
-        details = [item.text(i) for i in range(self.parameters_table.columnCount())]
-        for i, key in enumerate(self.parameter_vars.keys()):
-            self.parameter_vars[key].setText(details[i])
-
-        # Change the text of the button to "Update"
         self.create_or_update_button.setText(self.lang.get("update_parameter", "Update Parameter"))
         self.create_or_update_button.setEnabled(True)
-
-        # Enable or disable the "Enable" button based on the 'enabled' status of the parameter
-        if is_enabled == '1' or is_enabled.lower() == 'yes':  # Adjust the condition based on your data
-            self.enable_button.setEnabled(False)
-        else:
-            self.enable_button.setEnabled(True)
 
     def create_or_update_parameter(self):
         # Check if it's a create or update action based on the button text
         if self.create_or_update_button.text() == self.lang.get("create_new_parameter", "Create New Parameter"):
-            print("I'm here")
             self.apply_parameters()
         else:
             self.update_parameter()
@@ -294,38 +406,155 @@ class ParametersTab:
             self.create_or_update_button.setText(self.lang.get("create_new_parameter", "Create New Parameter"))
             self.create_or_update_button.setEnabled(False)  # Optionally disable if no selection
 
-    def apply_parameters(self):
-        if not all(self.parameter_vars[var].text().strip() for var in self.parameter_vars):
-            error_dialog = QErrorMessage()
-            error_dialog.showMessage("All fields are required.")
-            return
+    def collect_and_validate_input(self):
+        # Collect basic parameter data
+        name = self.parameter_vars["Name"].text().strip()
+        iterations = self.parameter_vars["Iterations"].text().strip()
 
-        parameters = tuple(self.parameter_vars[var].text().strip() for var in self.parameter_vars)
-        print("New parameters:", parameters)  # Add this line to check if parameters are correctly retrieved
-        insert_parameters(parameters)
-        self.load_parameters()  # Refresh the list to include the new parameters
+        distributions_for_parameters = {
+            "Area": ["Uniform"],
+            "Thickness": ["Triangular"],
+            "Porosity": ["Normal"],
+            "Water Saturation": ["Normal"],
+            "FVF": ["Uniform"]
+        }
+
+        # Validate basic parameter data
+        if not name or not iterations.isdigit():
+            QErrorMessage().showMessage("Name and Iterations are required, and Iterations must be numeric.")
+            return None
+
+        print("parameter_vars", self.parameter_vars)
+
+        # Initialize parameter object with basic data and empty distributions list
+        parameter_data = {
+            "Name": name,
+            "Iterations": int(iterations),
+            "Distributions": []
+        }
+
+        # Example: Collect and validate distribution data for 'Area'
+        # area_data = self.collect_distribution_data("Area")
+        for parameter_name, distribution_types in distributions_for_parameters.items():
+            if f"{parameter_name}_Min" or f"{parameter_name}_Std_dev" or f"{parameter_name}_Mode" in self.parameter_vars:
+                for dist_type in distribution_types:
+                    print(f"Processing distribution type: {dist_type}")
+                    data = self.collect_distribution_data(parameter_name, dist_type)
+                    print("Data:", data)
+                    if data:
+                        print("Adding distribution data:", data)
+                        parameter_data["Distributions"].append(data)
+                    else:
+                        QErrorMessage().showMessage(f"Invalid distribution data for {parameter_name} ({dist_type}).")
+                        return None
+        # if area_data:
+        #     parameter_data["distributions"].append(area_data)
+        #     # Add parameter name
+        #     parameter_data["distributions"][0]["parameter_name"] = "Area"
+        #     # Add distribution type
+        #     parameter_data["distributions"][0]["distribution_type"] = "Uniform"
+        # else:
+        #     QErrorMessage().showMessage("Invalid distribution data for Area.")
+        #     return None
+        #
+        # thickness_data = self.collect_distribution_data("Thickness")
+        # if thickness_data:
+        #     parameter_data["distributions"].append(thickness_data)
+        # else:
+        #     QErrorMessage().showMessage("Invalid distribution data for Thickness.")
+        #     return None
+        #
+        # porosity_data = self.collect_distribution_data("Porosity")
+        # if porosity_data:
+        #     parameter_data["distributions"].append(porosity_data)
+        # else:
+        #     QErrorMessage().showMessage("Invalid distribution data for Porosity.")
+        #     return None
+        #
+        # water_saturation_data = self.collect_distribution_data("Water Saturation")
+        # if water_saturation_data:
+        #     parameter_data["distributions"].append(water_saturation_data)
+        # else:
+        #     QErrorMessage().showMessage("Invalid distribution data for Water Saturation.")
+        #     return None
+        #
+        # fvf_data = self.collect_distribution_data("FVF")
+        # if fvf_data:
+        #     parameter_data["distributions"].append(fvf_data)
+        # else:
+        #     QErrorMessage().showMessage("Invalid distribution data for FVF.")
+        #     return None
+
+        # Repeat the above for other distributions as needed
+
+        return parameter_data
+
+    def collect_distribution_data(self, parameter_name, distribution_type):
+        # Initialize all variables to None at the start
+        min_value = None
+        max_value = None
+        std_value = None
+        mean_value = None
+        mode_value = None
+
+        # Conditional assignments based on distribution type
+        if distribution_type == "Flexible" or distribution_type == "Uniform":
+            min_value = self.parameter_vars[f"{parameter_name}_Min"].text().strip()
+            max_value = self.parameter_vars[f"{parameter_name}_Max"].text().strip()
+        elif distribution_type == "Normal" or distribution_type == "Log-normal":
+            mean_value = self.parameter_vars[f"{parameter_name}_Mean"].text().strip()
+            std_value = self.parameter_vars[f"{parameter_name}_Std_dev"].text().strip()
+        elif distribution_type == "Triangular":
+            min_value = self.parameter_vars[f"{parameter_name}_Min"].text().strip()
+            mode_value = self.parameter_vars[f"{parameter_name}_Mode"].text().strip()
+            max_value = self.parameter_vars[f"{parameter_name}_Max"].text().strip()
+
+        # Return a dictionary with the collected values, using conditional expressions to include relevant ones
+        return {
+            "Parameter_name": parameter_name,
+            "Distribution_type": distribution_type,
+            "Min_value": min_value,
+            "Max_value": max_value,
+            "Std_dev": std_value,
+            "Mean": mean_value,
+            "Mode": mode_value
+        }
+
+    def apply_parameters(self):
+        parameter_data = self.collect_and_validate_input()
+        if parameter_data is None:
+            return  # Early exit if validation fails
+
+        if self.current_id is None:
+            # New parameter insertion
+            insert_parameters(parameter_data)
+        else:
+            # Update existing parameter
+            parameter_data['id'] = self.current_id  # Ensure the ID is included for updates
+            update_parameter_by_id(parameter_data)
+
+        self.load_parameters()  # Refresh UI
 
     def load_parameters(self):
         self.parameters_table.clear()
         parameters = list_parameters()
-        print(parameters)
-        for config in parameters:
-            # Assuming 'config' is a tuple like:
-            # (id, name, enabled, iterations, area, thickness, porosity, water_saturation, fvf, created_at, updated_at)
-            # Adjust the tuple indices according to your actual data structure
-            display_values = config[:-1] + ('Yes' if config[-1] else 'No',)
-            item = CenteredTreeWidgetItem(list(map(str, display_values)))
+        for param in parameters:
+            # Assuming param structure: id, name, iterations, enabled, created_at, updated_at, distributions
+            display_values = [
+                str(param[0]),  # ID
+                param[1],  # Name
+                str(param[2]),  # Iterations
+                "Yes" if param[3] else "No",  # Enabled
+                param[4],  # "Created At"
+                param[5]  # "Updated At"
+            ]
+            item = CenteredTreeWidgetItem(display_values)
             self.parameters_table.addTopLevelItem(item)
-
-        self.adjust_column_widths()  # Adjust column widths after loading
-
-        # Connect signals to dynamically adjust column widths
-        self.parameters_table.itemExpanded.connect(self.adjust_column_widths)
-        self.parameters_table.itemCollapsed.connect(self.adjust_column_widths)
+        self.adjust_column_widths()
 
     def adjust_column_widths(self):
         max_width = 200  # Set your desired maximum width for any column
         for column in range(self.parameters_table.columnCount()):
-            self.parameters_table.resizeColumnToContents(column)
+            # self.parameters_table.resizeColumnToContents(column)
             if self.parameters_table.columnWidth(column) > max_width:
                 self.parameters_table.setColumnWidth(column, max_width)

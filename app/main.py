@@ -2,11 +2,20 @@
 # Title: Monte Carlo Simulation with Python
 # Description: This is a simple Monte Carlo sim with Python.
 from PyQt6.QtWidgets import QDialog
+import sys
+import os
+# Calculate the correct absolute path to the project root
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
+# Insert the project root at the beginning of the list
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+print("Adjusted sys.path:")
+print(sys.path)
 from core.gui.base import ask_language_gui, main_gui
 from preferences import load_preference, update_language_preference
 from dotenv import load_dotenv
-import os
 
 
 def main():

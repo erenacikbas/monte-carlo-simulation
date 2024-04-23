@@ -5,7 +5,7 @@ RESTART_EXIT_CODE = 42  # Define a unique exit code to signal a restart
 
 
 def main():
-    args = [sys.executable, "main.py"]
+    args = [sys.executable, "app/main.py"]
     while True:
         process = subprocess.Popen(args)
         process.wait()
