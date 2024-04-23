@@ -226,7 +226,7 @@ class ParametersTab:
         desc_label.setStyleSheet("color: #686868;")  # Greyed out appearance
         parameter_group_layout.addWidget(desc_label, 0, 0, 1, 2)  # Span two columns for description
 
-        if parameter in ["Area", "FVF"]:
+        if parameter in ["FVF"]:
             # Fields for min and max values
             min_edit = QLineEdit()
             min_edit.setPlaceholderText("Min")
@@ -248,7 +248,7 @@ class ParametersTab:
             self.parameter_vars[f"{parameter}_Mean"] = mean_edit
             self.parameter_vars[f"{parameter}_Std_dev"] = std_dev_edit
 
-        elif parameter in ["Thickness"]:
+        elif parameter in ["Area", "Thickness"]:
             # Fields for min, mode, and max values
             min_edit = QLineEdit()
             min_edit.setPlaceholderText("Min")

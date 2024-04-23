@@ -50,8 +50,10 @@ class SimulationsTab:
 
     def populate_enabled_parameter(self):
         self.enabled_parameter = get_enabled_parameter()  # Get the enabled parameter from the database
-        self.iterations = self.enabled_parameter[2]  # Assuming [2] is the iterations column
-        print("Iterations: ", self.iterations)
+        print(self.enabled_parameter)
+        if len(self.enabled_parameter)>0 is not None:
+            self.iterations = self.enabled_parameter[2]  # Assuming [2] is the iterations column
+            print("Iterations: ", self.iterations)
 
     def refresh_parameters(self):
         self.parameter_var.clear()
