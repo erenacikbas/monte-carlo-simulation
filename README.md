@@ -1,7 +1,7 @@
 # Monte Carlo Reservoir Simulation
 
 ## Project Overview
-This project implements a Monte Carlo simulation for estimating the volume of hydrocarbon reservoirs. By leveraging probabilistic methods, it accounts for uncertainties in reservoir parameters to generate a distribution of possible reservoir volumes, aiding in better decision-making and risk assessment in petroleum engineering.
+This project implements a Monte Carlo simulation for estimating the volume of hydrocarbon reservoirs. By leveraging probabilistic methods, it accounts for uncertainties in reservoir parameters to generate a distribution of possible reservoir volumes, aiding in better decision-making and risk assessment in petroleum engineering. This project is created from scratch the PETE 418 Course.
 
 ## Features
 - Customizable probabilistic distributions for key reservoir parameters (area, thickness, porosity, water saturation, and formation volume factor).
@@ -11,6 +11,22 @@ This project implements a Monte Carlo simulation for estimating the volume of hy
 
 ## Getting Started
 
+### Screenshots
+
+#### Parameters Screen
+<p align="center">
+  <img src="static/screenshots/parameters.png" alt="Parameters Screen" width="300"/>
+
+</p>
+
+#### Simulations Screen
+<p align="center">
+  <img src="static/screenshots/simulations.png" alt="Image 1 Description" width="300"/>
+  <img src="static/screenshots/simulations-2.png" alt="Image 2 Description" width="300"/>
+  <img src="static/screenshots/simulations-3.png" alt="Image 2 Description" width="300"/>
+
+</p>
+
 ### Prerequisites
 - Python 3.6 or newer
 - numpy
@@ -18,10 +34,6 @@ This project implements a Monte Carlo simulation for estimating the volume of hy
 
 ### Installation
 Clone this repository to your local machine using:
-
-```sh
-git clone https://github.com/erenacikbas/monte_carlo_reservoir_simulation.git
-```
 
 Navigate to the project directory:
 ```sh
@@ -46,14 +58,8 @@ pip install -r requirements.txt
 ### Usage
 Run the main script using:
 ```sh
-python main.py
+python .\app\watchdog.py
 ```
-
-## License
-Distributed under the MIT License. See `LICENSE` for more information.
 
 ## Contact
 Eren Acikbas - eren@erenacikbas.com
-
-## Acknowledgements
-

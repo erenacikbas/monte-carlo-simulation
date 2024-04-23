@@ -103,6 +103,7 @@ class SimulationsTab:
             self.params = {}  # Fallback if no enabled parameter or distributions
 
     def map_distributions_to_params(self, distributions):
+        print("Distributions: ", distributions)
         params = {}
         for dist in distributions:
             param_name = dist[0]  # Assuming the third column in the database is the parameter_name
@@ -212,16 +213,16 @@ class SimulationsTab:
         self.tab_widget.addTab(tab_cdf, "ROIP CDF")
 
         # Inside your run_simulation method, adjust the savefig calls like so:
-        ooip_pdf_fig.savefig("ooip_pdf.png", dpi=300, format='png')  # High resolution
-        ooip_cdf_fig.savefig("ooip_cdf.png", dpi=300, format='png')  # High resolution
-        roip_pdf_fig.savefig("roip_pdf.png", dpi=300, format='png')  # High resolution
-        roip_cdf_fig.savefig("roip_cdf.png", dpi=300, format='png')  # High resolution
+        ooip_pdf_fig.savefig("results/ooip_pdf.png", dpi=300, format='png')  # High resolution
+        ooip_cdf_fig.savefig("results/ooip_cdf.png", dpi=300, format='png')  # High resolution
+        roip_pdf_fig.savefig("results/roip_pdf.png", dpi=300, format='png')  # High resolution
+        roip_cdf_fig.savefig("results/roip_cdf.png", dpi=300, format='png')  # High resolution
 
         # Alternatively, for vector graphics which are resolution-independent, you can use SVG
-        ooip_pdf_fig.savefig("ooip_pdf.svg", format='svg')  # Vector graphic
-        ooip_cdf_fig.savefig("ooip_cdf.svg", format='svg')  # Vector graphic
-        roip_pdf_fig.savefig("roip_pdf.svg", format='svg')  # Vector graphic
-        roip_cdf_fig.savefig("roip_cdf.svg", format='svg')  # Vector graphic
+        ooip_pdf_fig.savefig("results/ooip_pdf.svg", format='svg')  # Vector graphic
+        ooip_cdf_fig.savefig("results/ooip_cdf.svg", format='svg')  # Vector graphic
+        roip_pdf_fig.savefig("results/roip_pdf.svg", format='svg')  # Vector graphic
+        roip_cdf_fig.savefig("results/roip_cdf.svg", format='svg')  # Vector graphic
 
     def plot_parameter_pdf(self, data, parameter_name):
         fig = Figure(figsize=(6, 5), dpi=100)
