@@ -39,9 +39,11 @@ class MonteCarloSimulator:
         results = self.distribution_plotter.run_monte_carlo_simulation(iterations)
 
         # Original Oil in Place (OOIP) and Recovery Oil in Place (ROIP) Calculations
-        ooip_results = 7758 * np.array(results['Area']) * np.array(results['Thickness']) * np.array(
+        #ooip_results = 7758 * np.array(results['Area']) * np.array(results['Thickness']) * np.array(
+        #    results['Porosity']) * (1 - np.array(results['Water Saturation'])) / np.array(results['FVF'])
+        ooip_results = 7758 * np.array(results['Volume']) * np.array(results['Net to Gross Ratio']) * np.array(
             results['Porosity']) * (1 - np.array(results['Water Saturation'])) / np.array(results['FVF'])
-        roip_results = ooip_results * 0.2  # Applying 20% recovery factor
+        roip_results = ooip_results * np.array(results['Recovery Factor'])  # Applying 20% recovery factor
 
         # Convert results to MMbbl for plotting and analysis
         ooip_results_mm = ooip_results / 1e6

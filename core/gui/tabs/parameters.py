@@ -57,7 +57,7 @@ class ParametersTab:
 
         # Load new values from selected item
         for i, key in enumerate(
-                ["Id", "Name", "Iterations", "Area", "Thickness", "Porosity", "Water Saturation", "FVF"]):
+                ["Id", "Name", "Iterations", "Volume", "Net To Gross Ratio", "Porosity", "Water Saturation", "FVF"]):
             value = item.text(i) if i < item.columnCount() else ""
             if key in self.parameter_vars:
                 self.parameter_vars[key].setText(value)
@@ -173,11 +173,11 @@ class ParametersTab:
             "Id": "This reference will be auto-generated",
             "Name": "Unique name for the parameter configuration",
             "Iterations": "Number of simulation iterations",
-            "Area": "Area covered by the simulation (Uniform or Triangular distribution)",
-            "Thickness": "Thickness of the material (Normal or Log-normal distribution)",
-            "Porosity": "Porosity of the material (Normal or Log-normal distribution)",
-            "Water Saturation": "Water saturation in the material (Uniform or Normal/Log-normal distribution)",
-            "FVF": "Formation Volume Factor (Flexible distribution based on data)"
+            "Volume": "Volume covered by the simulation",
+            "Net To Gross Ratio": "Net Pay to Gross thickness ratio",
+            "Porosity": "Porosity of the material",
+            "Water Saturation": "Water saturation in the material",
+            "FVF": "Formation Volume Factor"
         }
 
         if "Id" in self.parameter_vars:

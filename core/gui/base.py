@@ -112,7 +112,7 @@ class MainApplication(QMainWindow):
         footer_layout.addStretch(1)  # Add stretch to push the license to the center
 
         # License Information (Centered)
-        license_text = self.lang.get("license_info", "© 2024 Eren Tuna Açıkbaş - MIT License")
+        license_text = self.lang.get("license_info", "© 2024 Only Wells - MIT License")
         license_label = QLabel(license_text)
         version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         footer_layout.addWidget(license_label)

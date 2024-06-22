@@ -17,7 +17,7 @@
   "about_title": "Monte Carlo Simülasyon Uygulaması Hakkında",
   "about_description": "Monte Carlo Simülasyonu, karmaşık sistemlerin modellemesini ve tahmin modellerindeki belirsizlik ve değişkenliğin etkisinin analiz edilmesini sağlayan matematiksel bir tekniktir. İsmini ünlü Monaco kumarhanesinden alır ve teoride deterministik olabilecek problemleri çözmek için rastlantısalığı kullanır. Uygulamamız, çeşitli senaryolarda simülasyonlar için kullanıcı dostu bir arayüz sağlayarak bu tekniği kullanır, karar verme ve tahmini modelleme kolaylaştırır.\n\n**Özellikler**:\n- Esnek Parametre Yapılandırması\n- Kapsamlı Simülasyon Kontrolü\n- Dinamik Sonuç Görselleştirme\n- İleri Düzey Veri Analizi Araçları\n- Senaryo Karşılaştırması\n- Dışa Aktarılabilir Raporlar\n\nMatematiksel modelleme, yazılım mühendisliği ve KUI tasarımında uzmanların katkılarıyla geliştirilmiştir. Destek veya geri bildirim için bana buradan ulaşabilirsiniz.",
   "flaticon_credit": "Dave Gandy tarafından yapılan ikonlar Flaticon'dan alınmıştır",
-  "author_info": "© 2024 Eren Tuna Açıkbaş.",
+  "author_info": "© 2024 Only Wells.",
   "select_language": "Dili Seçin:",
   "language_updated": "Dil güncellendi. Uygulama yeniden yükleniyor...",
   "license": "Lisans",
