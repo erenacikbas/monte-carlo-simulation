@@ -213,16 +213,16 @@ class SimulationsTab:
         self.tab_widget.addTab(tab_cdf, "ROIP CDF")
 
         # Inside your run_simulation method, adjust the savefig calls like so:
-        ooip_pdf_fig.savefig("results/ooip_pdf.png", dpi=300, format='png')  # High resolution
-        ooip_cdf_fig.savefig("results/ooip_cdf.png", dpi=300, format='png')  # High resolution
-        roip_pdf_fig.savefig("results/roip_pdf.png", dpi=300, format='png')  # High resolution
-        roip_cdf_fig.savefig("results/roip_cdf.png", dpi=300, format='png')  # High resolution
+        ooip_pdf_fig.savefig(f"results/ooip_pdf_{self.iterations}.png", dpi=300, format='png')  # High resolution
+        ooip_cdf_fig.savefig(f"results/ooip_{self.iterations}.png", dpi=300, format='png')  # High resolution
+        roip_pdf_fig.savefig(f"results/roip_{self.iterations}.png", dpi=300, format='png')  # High resolution
+        roip_cdf_fig.savefig(f"results/roip_cdf_{self.iterations}.png", dpi=300, format='png')  # High resolution
 
         # Alternatively, for vector graphics which are resolution-independent, you can use SVG
-        ooip_pdf_fig.savefig("results/ooip_pdf.svg", format='svg')  # Vector graphic
-        ooip_cdf_fig.savefig("results/ooip_cdf.svg", format='svg')  # Vector graphic
-        roip_pdf_fig.savefig("results/roip_pdf.svg", format='svg')  # Vector graphic
-        roip_cdf_fig.savefig("results/roip_cdf.svg", format='svg')  # Vector graphic
+        ooip_pdf_fig.savefig(f"results/ooip_pdf_{self.iterations}.svg", format='svg')  # Vector graphic
+        ooip_cdf_fig.savefig(f"results/ooip_cdf_{self.iterations}.svg", format='svg')  # Vector graphic
+        roip_pdf_fig.savefig(f"results/roip_pdf_{self.iterations}.svg", format='svg')  # Vector graphic
+        roip_cdf_fig.savefig(f"results/roip_cdf_{self.iterations}.svg", format='svg')  # Vector graphic
 
     def plot_parameter_pdf(self, data, parameter_name):
         fig = Figure(figsize=(6, 5), dpi=100)
@@ -244,7 +244,7 @@ class SimulationsTab:
         ax.set_ylabel('Probability Density', fontsize=8)
         ax.tick_params(axis='both', which='major', labelsize=8)
         ax.legend(fontsize=8)
-        fig.savefig(f"{parameter_name}_pdf.svg", dpi=300, format='svg')
+        fig.savefig(f"results/{parameter_name}_pdf_{self.iterations}.png", dpi=300, format='svg')
         return fig
 
     def plot_parameter_cdf(self, data, parameter_name):
@@ -260,5 +260,5 @@ class SimulationsTab:
         ax_cdf.set_ylabel('Cumulative Probability', fontsize=8)
         ax_cdf.tick_params(axis='both', which='major', labelsize=8)
         ax_cdf.legend()
-        fig_cdf.savefig(f"{parameter_name}_cdf.svg", dpi=300, format='svg')
+        fig_cdf.savefig(f"results/{parameter_name}_cdf_{self.iterations}.png", dpi=300, format='svg')
         return fig_cdf
