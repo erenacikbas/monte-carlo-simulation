@@ -219,10 +219,10 @@ class SimulationsTab:
         roip_cdf_fig.savefig(f"results/roip_cdf_{self.iterations}.png", dpi=300, format='png')  # High resolution
 
         # Alternatively, for vector graphics which are resolution-independent, you can use SVG
-        ooip_pdf_fig.savefig(f"results/ooip_pdf_{self.iterations}.svg", format='svg')  # Vector graphic
-        ooip_cdf_fig.savefig(f"results/ooip_cdf_{self.iterations}.svg", format='svg')  # Vector graphic
-        roip_pdf_fig.savefig(f"results/roip_pdf_{self.iterations}.svg", format='svg')  # Vector graphic
-        roip_cdf_fig.savefig(f"results/roip_cdf_{self.iterations}.svg", format='svg')  # Vector graphic
+        #ooip_pdf_fig.savefig(f"results/ooip_pdf_{self.iterations}.svg", format='svg')  # Vector graphic
+        #ooip_cdf_fig.savefig(f"results/ooip_cdf_{self.iterations}.svg", format='svg')  # Vector graphic
+        #roip_pdf_fig.savefig(f"results/roip_pdf_{self.iterations}.svg", format='svg')  # Vector graphic
+        #roip_cdf_fig.savefig(f"results/roip_cdf_{self.iterations}.svg", format='svg')  # Vector graphic
 
     def plot_parameter_pdf(self, data, parameter_name):
         fig = Figure(figsize=(6, 5), dpi=100)
@@ -239,12 +239,12 @@ class SimulationsTab:
         kde_y = kde(kde_x)
         ax.plot(kde_x, kde_y, c='darkorange', label='KDE')
 
-        ax.set_title(f"{parameter_name.capitalize()} PDF", fontsize=8)
+        ax.set_title(f"{parameter_name.capitalize()} PDF ({self.iterations} iterations)", fontsize=8, fontweight='bold')
         ax.set_xlabel('Value', fontsize=8)
         ax.set_ylabel('Probability Density', fontsize=8)
         ax.tick_params(axis='both', which='major', labelsize=8)
         ax.legend(fontsize=8)
-        fig.savefig(f"results/{parameter_name}_pdf_{self.iterations}.png", dpi=300, format='svg')
+        fig.savefig(f"results/{parameter_name}_pdf_{self.iterations}.png", dpi=300, format='png', bbox_inches='tight')
         return fig
 
     def plot_parameter_cdf(self, data, parameter_name):
@@ -255,10 +255,10 @@ class SimulationsTab:
         ax_cdf = fig_cdf.add_subplot(111)
         fig_cdf.subplots_adjust(left=.2, right=0.95, top=0.85, bottom=0.25)
         ax_cdf.plot(data_sorted, cdf, marker='.', linestyle='', label='CDF')
-        ax_cdf.set_title(f"{parameter_name.capitalize()} CDF", fontsize=8)
+        ax_cdf.set_title(f"{parameter_name.capitalize()} CDF ({self.iterations} iterations)", fontsize=8, fontweight='bold')
         ax_cdf.set_xlabel(parameter_name.capitalize(), fontsize=8)
         ax_cdf.set_ylabel('Cumulative Probability', fontsize=8)
         ax_cdf.tick_params(axis='both', which='major', labelsize=8)
         ax_cdf.legend()
-        fig_cdf.savefig(f"results/{parameter_name}_cdf_{self.iterations}.png", dpi=300, format='svg')
+        fig_cdf.savefig(f"results/{parameter_name}_cdf_{self.iterations}.png", dpi=300, format='png', bbox_inches='tight')
         return fig_cdf

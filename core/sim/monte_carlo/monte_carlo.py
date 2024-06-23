@@ -66,7 +66,7 @@ class MonteCarloSimulator:
         fig_ooip_pdf = Figure(figsize=(5, 4), dpi=100)
         ax_ooip_pdf = fig_ooip_pdf.add_subplot(111)
         ax_ooip_pdf.plot(ooip_vals_mm, ooip_pdf, color='blue')
-        ax_ooip_pdf.set_title("OOIP Distribution (PDF)", fontsize=12, fontweight='bold')
+        ax_ooip_pdf.set_title(f"OOIP Distribution (PDF) ({iterations} iterations)", fontsize=12, fontweight='bold')
         ax_ooip_pdf.set_xlabel("OOIP (MMbbl)")
         ax_ooip_pdf.set_ylabel("Density")
 
@@ -90,7 +90,7 @@ class MonteCarloSimulator:
             ax_ooip_cdf.scatter(value_mm, y_value, color='black', zorder=5)  # Add scatter point at the intersection
             ax_ooip_cdf.plot([0, value_mm], [y_value, y_value], color='black', linestyle='--')
 
-        ax_ooip_cdf.set_title("OOIP Distribution (CDF)", fontsize=12, fontweight='bold')
+        ax_ooip_cdf.set_title(f"OOIP Distribution (CDF) ({iterations} iterations)", fontsize=12, fontweight='bold')
         ax_ooip_cdf.set_xlabel("OOIP (MMbbl)")
         ax_ooip_cdf.set_ylabel("Cumulative Probability")
         ax_ooip_cdf.legend()
@@ -99,7 +99,7 @@ class MonteCarloSimulator:
         fig_roip_pdf = Figure(figsize=(5, 4), dpi=100)
         ax_roip_pdf = fig_roip_pdf.add_subplot(111)
         ax_roip_pdf.plot(roip_vals_mm, roip_pdf, color='green')
-        ax_roip_pdf.set_title("ROIP Distribution (PDF)", fontsize=12, fontweight='bold')
+        ax_roip_pdf.set_title(f"ROIP Distribution (PDF) ({iterations} iterations)", fontsize=12, fontweight='bold')
         ax_roip_pdf.set_xlabel("ROIP (MMbbl)")
         ax_roip_pdf.set_ylabel("Density")
 
@@ -122,7 +122,7 @@ class MonteCarloSimulator:
                              label=f'{label}: {value_mm:.2f} MMbbl')
             ax_roip_cdf.scatter(value_mm, y_value, color='black', zorder=5)  # Add scatter point at the intersection
             ax_roip_cdf.plot([0, value_mm], [y_value, y_value], color='black', linestyle='--')
-        ax_roip_cdf.set_title("ROIP Distribution (CDF)", fontsize=12, fontweight='bold')
+        ax_roip_cdf.set_title(f"ROIP Distribution (CDF) ({iterations} iterations)", fontsize=12, fontweight='bold')
         ax_roip_cdf.set_xlabel("ROIP (MMbbl)")
         ax_roip_cdf.set_ylabel("Cumulative Probability")
         ax_roip_cdf.legend()
